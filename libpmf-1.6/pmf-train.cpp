@@ -209,7 +209,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 	if(model_fp) {
 		if(do_shuffle)
 			model.apply_permutation(row_perm, col_perm);
-		model.save(model_fp);
+		model.save_embedding(model_fp);
 		fclose(model_fp);
 	}
 	return ;

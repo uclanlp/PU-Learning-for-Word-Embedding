@@ -15,6 +15,7 @@ if [ ! -e ../data/text8 ]; then
   unzip text8.zip
   rm text8.zip
 fi
+mkdir -p ../data
 mv text8 ../data/text8
 
 CORPUS=../data/text8

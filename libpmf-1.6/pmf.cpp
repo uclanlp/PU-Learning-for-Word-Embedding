@@ -108,7 +108,8 @@ void pmf_model_t::save(FILE *fp){
 	fwrite(&buf, sizeof(double), 1, fp);
 }
 void pmf_model_t::save_embedding(FILE *fp){
-    // Need to save the embedding in ascii file and compare
+    save_wordembedding(W, fp, major_type==ROWMAJOR);
+    // Need to save the embedding in ascii file an compare
     // Check how save_mat_t is implemented
 
 }
@@ -141,8 +142,13 @@ void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 	if (row_major) {
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
+        {
 			for(size_t j = 0; j < n; ++j)
-				buf[idx++] = A[i][j];
+                fprintf(fp, "%.6f\n", A[i][j]);
+            fprintf(fp, "\n");
+        }
+       
+			//	buf[idx++] = A[i][j];
 	} else {
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
@@ -150,9 +156,34 @@ void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 				buf[idx++] = A[j][i];
 	}
 	fwrite(&buf[0], sizeof(double), m*n, fp);
+    
+
 	fflush(fp);
 	free(buf);
 }//}}}
+
+void save_wordembedding(const mat_t &A, FILE *fp, bool row_major){//{{{
+	if (fp == NULL)
+		fprintf(stderr, "output stream is not valid.\n");
+	long m = row_major? A.size(): A[0].size();
+	long n = row_major? A[0].size(): A.size();
+	fwrite(&m, sizeof(long), 1, fp);
+	fwrite(&n, sizeof(long), 1, fp);
+	double *buf = MALLOC(double, m*n);
+
+	if (row_major) {
+		size_t idx = 0;
+		for(size_t i = 0; i < m; ++i)
+        {
+			for(size_t j = 0; j < n; ++j)
+                fprintf(fp, "%.6f\n", A[i][j]);
+            fprintf(fp, "\n");
+        }
+    }
+	fflush(fp);
+}//}}}
+
+
 
 // Load a matrix from a file and return a mat_t matrix
 // row_major = true: the returned A is stored in row_major order,

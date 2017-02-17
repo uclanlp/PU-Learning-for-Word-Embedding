@@ -89,6 +89,7 @@ class pmf_model_t {//{{{
 		void apply_permutation(const std::vector<unsigned> &row_perm, const std::vector<unsigned> &col_perm);
 		void apply_permutation(const unsigned *row_perm=NULL, const unsigned *col_perm=NULL);
 		void save(FILE *fp);
+		void save_embedding(FILE *fp);
 		void load(FILE *fp, major_t major_type_);
 	private:
 		void mat_rand_init(mat_t &X, size_t m, size_t n, long seed);
@@ -152,6 +153,7 @@ void sgd_pu(blocks_t &training_set, blocks_t &test_set, pmf_parameter_t &param, 
 
 /*utility functions*/
 void load_mat_t(FILE *fp, mat_t &A, bool row_major=false);
+void save_wordembedding(const mat_t &A, FILE *fp, bool row_major=false);
 void save_mat_t(const mat_t &A, FILE *fp, bool row_major=false);
 void pmf_read_data(const char* srcdir, smat_t &training_set, smat_t &test_set, smat_t::format_t fmt = smat_t::TXT);
 void pmf_read_data(const char* srcdir, blocks_t &training_set, blocks_t &test_set, smat_t::format_t fmt = smat_t::TXT);
