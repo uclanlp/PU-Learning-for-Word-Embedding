@@ -173,7 +173,7 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
 	FILE *model_fp = NULL;
 	if(model_file_name) {
-		model_fp = fopen(model_file_name, "wb");
+		model_fp = fopen(model_file_name, "w");
 		if(model_fp == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
@@ -218,7 +218,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 void run_als(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
 	FILE *model_fp = NULL;
 	if(model_file_name) {
-		model_fp = fopen(model_file_name, "wb");
+		model_fp = fopen(model_file_name, "w");
 		if(model_fp == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
@@ -261,7 +261,7 @@ void run_als(pmf_parameter_t &param, const char *input_file_name, const char *mo
 void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
 	FILE *model_fp = NULL;
 	if(model_file_name) {
-		model_fp = fopen(model_file_name, "wb");
+		model_fp = fopen(model_file_name, "w");
 		if(model_fp == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
