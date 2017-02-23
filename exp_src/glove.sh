@@ -3,8 +3,8 @@
 # Makes programs, downloads sample data, trains a GloVe model, and then evaluates it.
 # One optional argument can specify the language used for eval script: matlab, octave or [default] python
 
-cd ../GloVe-1.2/make; cd ../exp_src
-cd ../libpmf-1.6/make; cd ../exp_src
+cd ../GloVe-1.2/; make; cd ../exp_src
+cd ../libpmf-1.6/; make; cd ../exp_src
 
 if [ ! -e ../data/text8 ]; then
   if hash wget 2>/dev/null; then
@@ -65,4 +65,4 @@ if [[ $? -eq 0 ]]
   fi
 fi
 
-
+gg
