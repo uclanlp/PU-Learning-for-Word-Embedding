@@ -42,7 +42,7 @@ def evaluate_vectors(W, vocab, ivocab):
         'gram5-present-participle.txt', 'gram6-nationality-adjective.txt',
         'gram7-past-tense.txt', 'gram8-plural.txt', 'gram9-plural-verbs.txt',
         ]
-    prefix = './eval/question-data/'
+    prefix = '../eval/question-data/'
 
     # to avoid memory overflow, could be increased/decreased
     # depending on system and vocab size
