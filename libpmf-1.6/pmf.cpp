@@ -142,13 +142,8 @@ void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 	if (row_major) {
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
-        {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6f\n", A[i][j]);
-            fprintf(fp, "\n");
-        }
-       
-			//	buf[idx++] = A[i][j];
+            	buf[idx++] = A[i][j];
 	} else {
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
@@ -167,8 +162,6 @@ void save_wordembedding(const mat_t &A, FILE *fp, bool row_major){//{{{
 		fprintf(stderr, "output stream is not valid.\n");
 	long m = row_major? A.size(): A[0].size();
 	long n = row_major? A[0].size(): A.size();
-	fwrite(&m, sizeof(long), 1, fp);
-	fwrite(&n, sizeof(long), 1, fp);
 	double *buf = MALLOC(double, m*n);
 
 	if (row_major) {
@@ -176,7 +169,7 @@ void save_wordembedding(const mat_t &A, FILE *fp, bool row_major){//{{{
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6f\n", A[i][j]);
+                fprintf(fp, "%.6f ", A[i][j]);
             fprintf(fp, "\n");
         }
     }
