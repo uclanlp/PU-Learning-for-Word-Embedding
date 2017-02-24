@@ -46,7 +46,7 @@ X_MAX=10
 $BUILDDIR/vocab_count -min-count $VOCAB_MIN_COUNT -verbose $VERBOSE < $CORPUS > $VOCAB_FILE
 if [[ $? -eq 0 ]]
   then
-  $BUILDDIR/cooccurForAscii -ascii=1  -memory $MEMORY -vocab-file $VOCAB_FILE -verbose $VERBOSE -window-size $WINDOW_SIZE < $CORPUS > $COOCCURRENCE_FILE
+  $BUILDDIR/cooccur -ascii 1  -memory $MEMORY -vocab-file $VOCAB_FILE -verbose $VERBOSE -window-size $WINDOW_SIZE < $CORPUS > $COOCCURRENCE_FILE
   if [[ $? -eq 0 ]]
     then
     lineOfVocab=$(cat <vocab.txt |wc -l)
