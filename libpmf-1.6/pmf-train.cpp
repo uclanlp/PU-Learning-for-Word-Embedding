@@ -180,6 +180,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 		}
 	}
 
+
 	smat_t training_set, test_set;
 	pmf_read_data(input_file_name, training_set, test_set, file_fmt);
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);

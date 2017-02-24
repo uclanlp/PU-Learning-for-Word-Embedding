@@ -108,6 +108,7 @@ void pmf_model_t::save(FILE *fp){
 	fwrite(&buf, sizeof(double), 1, fp);
 }
 void pmf_model_t::save_embedding(FILE *fp){
+    printf("???");
     save_wordembedding(W, fp, major_type==ROWMAJOR);
     // Need to save the embedding in ascii file an compare
     // Check how save_mat_t is implemented
@@ -169,9 +170,18 @@ void save_wordembedding(const mat_t &A, FILE *fp, bool row_major){//{{{
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6f ", A[i][j]);
+                fprintf(fp, "%.6lf ", A[i][j]);
             fprintf(fp, "\n");
         }
+    } else {
+		size_t idx = 0;
+		for(size_t i = 0; i < m; ++i)
+        {
+			for(size_t j = 0; j < n; ++j)
+                fprintf(fp, "%.6lf ", A[j][i]);
+            fprintf(fp, "\n");
+        }
+
     }
 	fflush(fp);
 }//}}}

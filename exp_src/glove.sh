@@ -63,6 +63,3 @@ if [[ $? -eq 0 ]]
        fi
     fi
   fi
-fi
-
-gg
