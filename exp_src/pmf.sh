@@ -63,7 +63,7 @@ EOF
       then
       cd ../libpmf-1.6/
       ./converter toy-example
-      ./omp-pmf-train -s 11 -n 12 -f 1 -k 20 toy-example
+      ./omp-pmf-train -s 10 -n 12 -f 1 -q 1 -p 0 -t 10 -b 0 -k 50 toy-example
       if [[ $? -eq 0 ]]
         then
         cd ../exp_src
