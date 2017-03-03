@@ -312,6 +312,7 @@ class smat_t{
 		size_t rows, cols;
 		size_t nnz, max_row_nnz, max_col_nnz;
 		val_type *val, *val_t;
+		val_type *weight, *weight_t;
 		size_t *col_ptr, *row_ptr;
 		unsigned *row_idx, *col_idx;
 
@@ -443,6 +444,7 @@ void smat_t<val_type>::clear_space() {
 			free(binary_buf);
 		else {
 			if(val)free(val); if(val_t)free(val_t);
+			if(weight)free(weight); if(weight_t)free(weight_t);
 			if(row_ptr)free(row_ptr);if(row_idx)free(row_idx);
 			if(col_ptr)free(col_ptr);if(col_idx)free(col_idx);
 		}
@@ -456,6 +458,7 @@ smat_t<val_type> smat_t<val_type>::transpose(){
 	smat_t<val_type> mt;
 	mt.cols = rows; mt.rows = cols; mt.nnz = nnz;
 	mt.val = val_t; mt.val_t = val;
+    mt.weight= weight_t; mt.weight_t = weight;
 	mt.col_ptr = row_ptr; mt.row_ptr = col_ptr;
 	mt.col_idx = row_idx; mt.row_idx = col_idx;
 	mt.max_col_nnz=max_row_nnz; mt.max_row_nnz=max_col_nnz;
@@ -702,6 +705,7 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	// Allocation of memory
 	mem_alloc_by_me = true;
 	val = MALLOC(val_type, nnz); val_t = MALLOC(val_type, nnz);
+	weight = MALLOC(val_type, nnz); weight_t = MALLOC(val_type, nnz);
 	row_idx = MALLOC(unsigned, nnz); col_idx = MALLOC(unsigned, nnz);
 	row_ptr = MALLOC(size_t, rows+1); col_ptr = MALLOC(size_t, cols+1);
 
@@ -737,6 +741,15 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	max_row_nnz = max_col_nnz = 0;
 	for(size_t c = 0; c < cols; c++) max_col_nnz = std::max(max_col_nnz, nnz_of_col(c));
 	for(size_t r = 0; r < rows; r++) max_row_nnz = std::max(max_row_nnz, nnz_of_row(r));
+    for(size_t idx=0; idx < nnz; idx++){
+        weight[idx] = val[idx];
+        weight_t[idx] = val_t[idx];
+        // FIXIT: implement f(X_ij)
+        val[idx] = log(val[idx]);
+        val_t[idx] = log(val_t[idx]);
+
+    }
+
 }
 
 template<typename val_type>

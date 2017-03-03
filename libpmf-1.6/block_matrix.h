@@ -239,13 +239,13 @@ void blocks_t<val_type>::load_from_PETSc(const char *filename) { // {{{
 			while(idx + chunksize < nnz) {
 				headersize += sizeof(double)*fread(&buf[0], sizeof(double), chunksize, fp);
 				for(size_t i = 0; i < chunksize; i++)
-					allrates[idx+i].j = (double) log(buf[i]);
+					allrates[idx+i].j = (double) buf[i];
 				idx += chunksize;
 			}
 			size_t remaining = nnz - idx;
 			headersize += sizeof(double)*fread(&buf[0], sizeof(double), remaining, fp);
 			for(size_t i = 0; i < remaining; i++)
-				allrates[idx+i].j = (double) log(buf[i]);
+				allrates[idx+i].j = (double) buf[i];
 		} // }}}
 	}
 	fclose(fp);

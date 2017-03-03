@@ -8,8 +8,8 @@ inline val_type RankOneUpdate(const smat_t &R, const int j, const vec_t &u, cons
 	if(R.col_ptr[j+1]==R.col_ptr[j]) return 0;
 	for(size_t idx=R.col_ptr[j]; idx < R.col_ptr[j+1]; idx++) {
 		size_t i = R.row_idx[idx];
-		g += u[i]*R.val[idx];
-		h += u[i]*u[i];
+		g += R.weight[idx] * u[i]*R.val[idx]; //FIXIT
+		h += R.weight[idx] * u[i]*u[i]; //FIXIT
 	}
 	val_type newvj = g/h, tmp = 0, delta = 0, fundec = 0;
 	if((do_nmf>0) & (newvj<0)) {
