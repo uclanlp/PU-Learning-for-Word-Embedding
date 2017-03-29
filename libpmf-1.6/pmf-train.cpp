@@ -171,14 +171,30 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 
 
 void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
-	FILE *model_fp = NULL;
-	if(model_file_name) {
-		model_fp = fopen(model_file_name, "w");
-		if(model_fp == NULL) {
+	FILE *model_fpw = NULL;	
+	FILE *model_fph = NULL;//FIXIT
+        
+      	if(model_file_name) {
+		char matrixname[1024];
+                sprintf(matrixname, "%s.W", model_file_name);
+
+		model_fpw = fopen(matrixname, "w");
+                if(model_fpw == NULL) {
+			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
+			exit(1);
+		}	
+
+                sprintf(matrixname, "%s.H", model_file_name);
+
+
+                model_fph = fopen(matrixname, "w");
+		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}
+
 	}
+
 
 
 	smat_t training_set, test_set;
@@ -207,26 +223,52 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 		ccdr1_pu(training_set, test_set, param, model);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
-	if(model_fp) {
+	if(model_fpw) {
 		if(do_shuffle)
 			model.apply_permutation(row_perm, col_perm);
-		model.save_embedding(model_fp);
-		fclose(model_fp);
+		model.save_embedding(model_fpw,model_fph);//FIXIT
+		fclose(model_fpw);
+                fclose(model_fph);
+                
 	}
+
+
+
+
+
+
+
 	return ;
 } // }}}
 
 void run_als(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
-	FILE *model_fp = NULL;
-	if(model_file_name) {
-		model_fp = fopen(model_file_name, "w");
-		if(model_fp == NULL) {
+	FILE *model_fpw = NULL;
+        FILE *model_fph = NULL;
+        
+
+
+        if(model_file_name) {
+        	char matrixname[1024];
+                sprintf(matrixname, "%s.W", model_file_name);
+
+		model_fpw = fopen(matrixname, "w");
+                if(model_fpw == NULL) {
+			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
+			exit(1);
+		}	
+
+                sprintf(matrixname, "%s.H", model_file_name);
+
+
+                model_fph = fopen(matrixname, "w");
+		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}
-	}
 
-	smat_t training_set, test_set;
+	}
+	
+        smat_t training_set, test_set;
 	pmf_read_data(input_file_name, training_set, test_set, file_fmt);
 	// ALS requires rowmajor model
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::ROWMAJOR);
@@ -250,24 +292,52 @@ void run_als(pmf_parameter_t &param, const char *input_file_name, const char *mo
 		als_pu(training_set, test_set, param, model);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
-	if(model_fp) {
+	if(model_fpw) {
 		if(do_shuffle)
 			model.apply_permutation(row_perm, col_perm);
-		model.save_embedding(model_fp);
-		fclose(model_fp);
+		model.save_embedding(model_fpw, model_fph);
+		fclose(model_fpw);
+                fclose(model_fph);
 	}
 	return ;
 } // }}}
 
 void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
-	FILE *model_fp = NULL;
-	if(model_file_name) {
-		model_fp = fopen(model_file_name, "w");
-		if(model_fp == NULL) {
+	FILE *model_fpw = NULL;
+        FILE *model_fph = NULL;
+        
+
+
+        
+        if(model_file_name) {
+        	char matrixname[1024];
+                sprintf(matrixname, "%s.W", model_file_name);
+
+		model_fpw = fopen(matrixname, "w");
+                if(model_fpw == NULL) {
+			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
+			exit(1);
+		}	
+
+                sprintf(matrixname, "%s.H", model_file_name);
+
+
+                model_fph = fopen(matrixname, "w");
+		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}
+
 	}
+	
+
+
+
+
+
+	
+
+
 
 	blocks_t training_set, test_set;
 	//pmf_read_data(input_file_name, training_set, test_set, file_fmt);
@@ -294,11 +364,12 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 		sgd_pu(training_set, test_set, param, model);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
-	if(model_fp) {
+	if(model_fpw) {
 		if(do_shuffle)
 			model.apply_permutation(row_perm, col_perm);
-		model.save_embedding(model_fp);
-		fclose(model_fp);
+		model.save_embedding(model_fpw, model_fph);
+		fclose(model_fpw);
+                fclose(model_fph);
 	}
 	return ;
 } // }}}

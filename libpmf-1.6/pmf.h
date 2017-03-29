@@ -89,7 +89,7 @@ class pmf_model_t {//{{{
 		void apply_permutation(const std::vector<unsigned> &row_perm, const std::vector<unsigned> &col_perm);
 		void apply_permutation(const unsigned *row_perm=NULL, const unsigned *col_perm=NULL);
 		void save(FILE *fp);
-		void save_embedding(FILE *fp);
+		void save_embedding(FILE *fpw, FILE *fph);
 		void load(FILE *fp, major_t major_type_);
 	private:
 		void mat_rand_init(mat_t &X, size_t m, size_t n, long seed);

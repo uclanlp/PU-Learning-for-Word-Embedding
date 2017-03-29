@@ -444,7 +444,7 @@ void smat_t<val_type>::clear_space() {
 			free(binary_buf);
 		else {
 			if(val)free(val); if(val_t)free(val_t);
-			if(weight)free(weight); if(weight_t)free(weight_t);
+			//if(weight)free(weight); if(weight_t)free(weight_t);
 			if(row_ptr)free(row_ptr);if(row_idx)free(row_idx);
 			if(col_ptr)free(col_ptr);if(col_idx)free(col_idx);
 		}
@@ -737,7 +737,7 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	}
 	fclose(fp);
 
-    int x_max = 100;
+    int x_max = 10;
     double alpha = 0.75;
 	csr_to_csc(); // Convert CSR to CSC
 	max_row_nnz = max_col_nnz = 0;

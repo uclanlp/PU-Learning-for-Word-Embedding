@@ -107,9 +107,10 @@ void pmf_model_t::save(FILE *fp){
 	double buf = (double)global_bias;
 	fwrite(&buf, sizeof(double), 1, fp);
 }
-void pmf_model_t::save_embedding(FILE *fp){
+void pmf_model_t::save_embedding(FILE *fpw, FILE *fph){
     printf("???");
-    save_wordembedding(W, H, fp, major_type==ROWMAJOR);
+    save_wordembedding(W, fpw, major_type==ROWMAJOR);
+    save_wordembedding(H, fph, major_type==ROWMAJOR);
     // Need to save the embedding in ascii file an compare
     // Check how save_mat_t is implemented
 
@@ -158,7 +159,7 @@ void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 	free(buf);
 }//}}}
 
-void save_wordembedding(const mat_t &A,  const  mat_t &B, FILE *fp, bool row_major){//{{{
+void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major){//{{{
 	if (fp == NULL)
 		fprintf(stderr, "output stream is not valid.\n");
 	long m = row_major? A.size(): A[0].size();
@@ -170,7 +171,7 @@ void save_wordembedding(const mat_t &A,  const  mat_t &B, FILE *fp, bool row_maj
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6lf ", A[i][j],B[i][j]);//FIXIT
+                fprintf(fp, "%.6lf ", A[i][j]);//FIXIT
             fprintf(fp, "\n");
         }
     } else {
@@ -178,7 +179,7 @@ void save_wordembedding(const mat_t &A,  const  mat_t &B, FILE *fp, bool row_maj
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6lf ", A[j][i],B[j][i]);//FIXIT
+                fprintf(fp, "%.6lf ", A[j][i]);//FIXIT
             fprintf(fp, "\n");
         }
 
