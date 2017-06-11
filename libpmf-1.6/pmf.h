@@ -112,6 +112,7 @@ class pmf_parameter_t {//{{{
 		int remove_bias;
 		int do_predict, verbose;
 		int do_nmf;  // non-negative matrix factorization
+                int save_each;
 		pmf_parameter_t() {
 			solver_type = CCDR1;
 			k = 10;
@@ -136,12 +137,13 @@ class pmf_parameter_t {//{{{
 			do_predict = 0;
 			verbose = 0;
 			do_nmf = 0;
+                        save_each = 0;
 		}
 };//}}}
 
 /* solvers using COLMAJOR*/
 void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model);
-void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model);
+void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model, int do_shuffle, std::vector<unsigned> row_perm, std::vector<unsigned> col_perm, std::vector<unsigned> inverse_row_perm, std::vector<unsigned> inverse_col_perm, const char *model_file_name);
 void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model);
 
 /* solvers using ROWMAJOR*/

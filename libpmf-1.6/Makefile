@@ -1,6 +1,6 @@
 CXX=g++
 #CXXFLAGS=-fopenmp -static -O3
-CXXFLAGS=-fopenmp -ffast-math -pipe -g -fPIC
+CXXFLAGS=-fopenmp -ffast-math -pipe -g -fPIC 
 #CXXFLAGS=-fopenmp -march=native -ffast-math -O3 -fPIC
 VERSION=1.6
 
@@ -8,7 +8,7 @@ VERSION=1.6
 
 BLASFLAGS=-llapack_atlas -lf77blas -lcblas -latlas -lgfortran -L/u/rofuyu/.local/lib  #GCC in UTCS
 BLASFLAGS=-llapack -lptf77blas -lptcblas -latlas -L/home/01845/rofuyu/.local/lib  # GCC in TACC
-BLASFLAGS=-lblas -llapack
+BLASFLAGS=-lblas -llapack  
 LIBSFLAGS=$(BLASFLAGS)
 
 all: omp-pmf-train converter

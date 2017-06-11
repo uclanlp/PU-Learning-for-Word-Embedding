@@ -492,7 +492,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 } // }}}
 
 // Cyclic Coordinate Descent for Matrix Factorization with uniform rho
-void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model){ // {{{
+void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model, int do_shuffle, std::vector<unsigned> row_perm, std::vector<unsigned> col_perm, std::vector<unsigned> inverse_row_perm, std::vector<unsigned> inverse_col_perm, const char *model_file_name){ // {{{
 	size_t k = param.k;
 	int maxiter = param.maxiter;
 	int inneriter = param.maxinneriter;
@@ -654,6 +654,46 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				fflush(stdout);
 			}
 		}
+	        if(param.save_each){
+                        FILE *model_fpw = NULL;	
+                        FILE *model_fph = NULL;//FIXIT
+
+                        float rho = param.rho;
+                        float lambda = param.lambda;
+                        
+                        if(model_file_name) {
+                                char matrixname[1024];
+
+
+                                sprintf(matrixname, "%s-l%f-r%f-oiter%d.W", model_file_name, lambda, rho, oiter);
+
+                                model_fpw = fopen(matrixname, "w");
+                                if(model_fpw == NULL) {
+                                        fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
+                                        exit(1);
+                                }	
+
+
+                                sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
+
+
+
+                                model_fph = fopen(matrixname, "w");
+                                if(model_fph == NULL) {
+                                        fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
+                                        exit(1);
+                                }
+                        }
+                        if(model_fpw) {
+                                if(do_shuffle)
+                                        model.apply_permutation(row_perm, col_perm);
+                                model.save_embedding(model_fpw,model_fph);//FIXIT
+                                fclose(model_fpw);
+                                fclose(model_fph);
+                                if(do_shuffle)
+                                        model.apply_permutation(inverse_row_perm, inverse_col_perm);
+                        }
+                }
 	}
 	omp_set_num_threads(num_threads_old);
 } // }}}

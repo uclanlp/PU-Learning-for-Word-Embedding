@@ -737,7 +737,7 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	}
 	fclose(fp);
 
-    int x_max = 10;
+    int x_max = 100;
     double alpha = 0.75;
 	csr_to_csc(); // Convert CSR to CSC
 	max_row_nnz = max_col_nnz = 0;
@@ -745,10 +745,18 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	for(size_t r = 0; r < rows; r++) max_row_nnz = std::max(max_row_nnz, nnz_of_row(r));
     for(size_t idx=0; idx < nnz; idx++){
         weight[idx] = (val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
-        weight_t[idx] = (val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        weight_t[idx] =  (val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
         // FIXIT: implement f(X_ij)
-        val[idx] = log(val[idx]);
-        val_t[idx] = log(val_t[idx]);
+        //val[idx] = log(val[idx]);//FIX it, remove log
+        //val_t[idx] = log(val_t[idx]);//FIX it, remove log
+
+
+            
+        //vweight[idx] = 1;//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
+        //weight_t[idx] = 1;//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        // FIXIT: implement f(X_ij)
+        //val[idx] = log(val[idx]);//FIX it, remove log
+        //val_t[idx] = log(val_t[idx]);//FIX it, remove log
 
     }
 

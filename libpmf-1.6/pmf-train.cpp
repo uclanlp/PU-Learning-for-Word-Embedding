@@ -32,6 +32,8 @@ void exit_with_help()
 	"    -q verbose: show information or not (default 0)\n"
 	"    -N do_nmf: do nmf (default 0)\n"
 	"    -S shuffle: random shuffle for rows and columns (default 1)\n"
+        "    -E save_each: save word embedding in each iteration (default 0)\n"
+	//"    -w warm_start: warm start or not for CCDR1 (default 0)\n"
 	//"    -w warm_start: warm start or not for CCDR1 (default 0)\n"
 	"    -b remove_bias: remove bias or not (default 1)\n"
 	"    -f format: select input format (default 0)\n"
@@ -131,6 +133,9 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 			case 'b':
 				param.remove_bias = atof(argv[i]);
 				break;
+                        case 'E':
+                                param.save_each = atoi(argv[i]);
+                                break;
 
 			case 'f':
 				file_fmt = (smat_t::format_t) atoi(argv[i]);
@@ -173,10 +178,16 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
 	FILE *model_fpw = NULL;	
 	FILE *model_fph = NULL;//FIXIT
+
+        float rho = param.rho;
+        float lambda = param.lambda;
+        int maxiter = param.maxiter;
         
       	if(model_file_name) {
 		char matrixname[1024];
-                sprintf(matrixname, "%s.W", model_file_name);
+
+
+                sprintf(matrixname, "%s-l%f-r%f-iter%d.final.W", model_file_name, lambda, rho, maxiter);
 
 		model_fpw = fopen(matrixname, "w");
                 if(model_fpw == NULL) {
@@ -184,7 +195,9 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 			exit(1);
 		}	
 
-                sprintf(matrixname, "%s.H", model_file_name);
+
+                sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
+
 
 
                 model_fph = fopen(matrixname, "w");
@@ -220,7 +233,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 	else if(param.solver_type == CCDR1_SPEEDUP)
 		ccdr1_speedup(training_set, test_set, param, model);
 	if(param.solver_type == PU_CCDR1)
-		ccdr1_pu(training_set, test_set, param, model);
+		ccdr1_pu(training_set, test_set, param, model, do_shuffle, row_perm, col_perm, inverse_row_perm, inverse_col_perm, model_file_name);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
 	if(model_fpw) {
