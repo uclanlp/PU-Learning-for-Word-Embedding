@@ -35,8 +35,8 @@ typedef block_matrix<val_type> blocks_t;
 
 //typedef std::vector<val_type> vec_t;
 //typedef std::vector<vec_t> mat_t;
-typedef dense_vector<val_type> vec_t;
-typedef dense_matrix<val_type> mat_t;
+typedef dense_vector<val_type> vec_t;//这里定义dense_vector，是一个向量
+typedef dense_matrix<val_type> mat_t;//定义dense_matrix是一个矩阵
 
 /* solver types*/
 enum {CCDR1=0, ALS=1, SGD=2, CCDR1_SPEEDUP=9, PU_CCDR1=10, PU_ALS=11, PU_SGD=12, PU_CCDR1_SPEEDUP=19, PU_SGD_ORIG=22};
@@ -113,6 +113,8 @@ class pmf_parameter_t {//{{{
 		int do_predict, verbose;
 		int do_nmf;  // non-negative matrix factorization
                 int save_each;
+		int glove_bias;
+		int glove_weight;
 		pmf_parameter_t() {
 			solver_type = CCDR1;
 			k = 10;
@@ -138,6 +140,8 @@ class pmf_parameter_t {//{{{
 			verbose = 0;
 			do_nmf = 0;
                         save_each = 0;
+			glove_bias = 0;
+			glove_weight = 0;
 		}
 };//}}}
 

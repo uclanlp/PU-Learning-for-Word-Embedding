@@ -492,6 +492,10 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 } // }}}
 
 // Cyclic Coordinate Descent for Matrix Factorization with uniform rho
+
+//这个方程非常重要，一定要仔细仔细看
+
+
 void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model, int do_shuffle, std::vector<unsigned> row_perm, std::vector<unsigned> col_perm, std::vector<unsigned> inverse_row_perm, std::vector<unsigned> inverse_col_perm, const char *model_file_name){ // {{{
 	size_t k = param.k;
 	int maxiter = param.maxiter;
@@ -505,6 +509,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 	omp_set_num_threads(param.threads);
 
+        //这块我不用****************************************
 	if(param.remove_bias) { // {{{
 		double bias = training_set.get_global_mean();
 		training_set.remove_bias(bias);
@@ -521,16 +526,33 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 					model.H[t][c] = 0;
 			}
 	} // }}}
+        //这块我不用****************************************
+	
+        
+        
+        
+        
+        //这里复制了 &A, At, &testR, testRt
 
-	// Create transpose view of A and R
+        // Create transpose view of A and R
 	smat_t &A = training_set, At = A.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
 
-	smat_iterator_t<val_type> it(A);
+
+	smat_iterator_t<val_type> it(A);//这里生命了一个smat迭代器,next()每个返回值是x, y, val的一个数组
+
+
+        //这里声明了一个R, R把A里面的信息给复制过来了,根据我自己加的代码。把weight信息给加上了
+
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
 	smat_t Rt = R.transpose();
 
-	mat_t &W = model.W, &H = model.H;
+        //这里声明了两个dense matrix,如果用维度来说的话，
+        //A = W* H  
+        //m*n = m*k * k*n
+	
+        mat_t &W = model.W, &H = model.H;
+        //这里实际上是一个dense vector，在这里使用长度来初始化的，uu是一个竖条，vv是一个横行?这里我是不是理解错了
 	vec_t uu(R.rows), vv(R.cols);
 
 	if(param.warm_start) { // {{{

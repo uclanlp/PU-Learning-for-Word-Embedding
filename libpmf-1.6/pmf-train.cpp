@@ -34,8 +34,9 @@ void exit_with_help()
 	"    -S shuffle: random shuffle for rows and columns (default 1)\n"
         "    -E save_each: save word embedding in each iteration (default 0)\n"
 	//"    -w warm_start: warm start or not for CCDR1 (default 0)\n"
-	//"    -w warm_start: warm start or not for CCDR1 (default 0)\n"
 	"    -b remove_bias: remove bias or not (default 1)\n"
+        "    -W implement glove weight: implement glove's  weight (default 0)\n"
+        "    -G implement glove bias: add bias for each column and row (default 0)\n"
 	"    -f format: select input format (default 0)\n"
 	"        0 -- plaintxt format\n"
 	"        1 -- PETSc format\n"
@@ -60,7 +61,15 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 				param.solver_type = atoi(argv[i]);
 				break;
 
-			case 'k':
+			case 'W':
+				param.glove_weight = atoi(argv[i]);
+				break;
+
+	        	case 'G':
+				param.glove_bias = atoi(argv[i]);
+				break;
+
+	        	case 'k':
 				param.k = atoi(argv[i]);
 				break;
 
@@ -186,20 +195,14 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
       	if(model_file_name) {
 		char matrixname[1024];
 
-
                 sprintf(matrixname, "%s-l%f-r%f-iter%d.final.W", model_file_name, lambda, rho, maxiter);
-
 		model_fpw = fopen(matrixname, "w");
                 if(model_fpw == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}	
 
-
                 sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
-
-
-
                 model_fph = fopen(matrixname, "w");
 		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
@@ -208,14 +211,14 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 
 	}
 
-
-
-	smat_t training_set, test_set;
-	pmf_read_data(input_file_name, training_set, test_set, file_fmt);
-	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);
+	smat_t training_set, test_set;//声明两个变量
+	pmf_read_data(input_file_name, training_set, test_set, file_fmt);//把data读进来
+	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
 
 
 	// Random permutation for rows and cols of R for better load balancing
+        //看看是不是要shuffle一下
+
 	std::vector<unsigned> row_perm, inverse_row_perm;
 	std::vector<unsigned> col_perm, inverse_col_perm;
 	if(do_shuffle) {
@@ -226,13 +229,20 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 		test_set.apply_permutation(row_perm, col_perm);
 	}
 
+
+
+
+
+
 	puts("starts!");
 	double time = omp_get_wtime();
 	if(param.solver_type == CCDR1)
 		ccdr1(training_set, test_set, param, model);
 	else if(param.solver_type == CCDR1_SPEEDUP)
 		ccdr1_speedup(training_set, test_set, param, model);
-	if(param.solver_type == PU_CCDR1)
+	
+        //在这里，把training_set, test_set, parameter, model给进去
+        if(param.solver_type == PU_CCDR1)
 		ccdr1_pu(training_set, test_set, param, model, do_shuffle, row_perm, col_perm, inverse_row_perm, inverse_col_perm, model_file_name);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
 
@@ -387,17 +397,25 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 	return ;
 } // }}}
 
+
+
+
+
+
+
+
+
 int main(int argc, char* argv[]){
-	char input_file_name[1024];
+	char input_file_name[1024];//声明两个变量，一个存储输入文件名，一个存储模型名字
 	char model_file_name[1024];
 //char *model_file_name=NULL;
-	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, model_file_name);
+	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, model_file_name);//对我的输入参数分析，确定后面用哪种模式去解
 
 	switch (param.solver_type){
 		case CCDR1:
 		case CCDR1_SPEEDUP:
 		case PU_CCDR1_SPEEDUP:
-		case PU_CCDR1:
+		case PU_CCDR1://现在我用的是这种方法
 			run_ccdr1(param, input_file_name, model_file_name);
 			break;
 		case ALS:

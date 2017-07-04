@@ -12,8 +12,8 @@ template<typename val_type> class blocks_t;
 template<typename val_type>
 class blocks_t {
 	public:
-		typedef entry_t<val_type> rate_t;
-		typedef dense_vector<rate_t> entry_set_t;
+		typedef entry_t<val_type> rate_t;//一个entry_t叫做rate_t
+		typedef dense_vector<rate_t> entry_set_t;//一群rate_t构成的dense_vector 叫做entry_set_t
 		struct block_t { // {{{
 			size_t start_row, sub_rows;
 			size_t start_col, sub_cols;
@@ -25,7 +25,7 @@ class blocks_t {
 			rate_t & operator[](size_t idx) { return entry_set[idx];}
 			const rate_t & operator[](size_t idx) const { return entry_set[idx];}
 			size_t size() const {return entry_set.size();}
-			const rate_t* find(const rate_t &val) const {
+			const rate_t* find(const rate_t &val) const {//这里也没给循环，难道是一个一个给进入，比较，返回结果吗？
 				const rate_t *first = entry_set.data(), *last = first+entry_set.size();;
 				first = std::lower_bound(first, last, val, RateCompare(blocks));
 				if(first != last && val.i == first->i && val.j == first->j)
@@ -109,7 +109,7 @@ class blocks_t {
 				nnz_col[r.j]++;
 			}
 
-		} // }}}
+                } // }}}
 		void load(long _rows, long _cols, long _nnz, const char *filename, typename sparse_matrix<val_type>::format_t fmt){  // {{{
 			if(fmt == sparse_matrix<val_type>::TXT) {
 				file_iterator_t<val_type> entry_it(_nnz, filename);
