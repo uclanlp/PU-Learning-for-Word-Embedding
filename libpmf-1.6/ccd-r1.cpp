@@ -29,6 +29,7 @@ inline val_type RankOneUpdate(const smat_t &R, const int j, const vec_t &u, cons
 	return newvj;
 } // }}}
 
+//我也大量使用了这个方程，要注意
 inline double UpdateRating(smat_t &R, const vec_t &Wt2, const vec_t &Ht2) { // {{{
 	double loss=0;
 #pragma omp parallel for schedule(kind) reduction(+:loss)
@@ -411,6 +412,11 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 } // }}}
 
 
+
+
+
+
+
 // CCD++PU
 
 static inline val_type dot(const vec_t& u, const vec_t& v) { // {{{
@@ -421,7 +427,7 @@ static inline val_type dot(const vec_t& u, const vec_t& v) { // {{{
 		ret += u[t]*v[t];
 	return ret;
 } // }}}
-
+//这个方程我也用到了，不过应该不太影响结果
 static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_model_t &model, double *loss_omega=NULL, double *loss_zero=NULL) { // {{{
 	double omega_part = 0.0;
 #pragma omp parallel for schedule(static) reduction(+:omega_part)
@@ -452,6 +458,7 @@ static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_
 	return zero_part+omega_part;
 } // }}}
 
+//这里Hsiang-fu 做了修改，要非常注意
 void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param, mat_t &W, mat_t &H, vec_t &u, vec_t &v, vec_t &uTWHT, double &innerfundec_cur) {  // {{{
 
 	// could be replaced by BLAS operations
@@ -475,7 +482,27 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		if(R.nnz_of_col(c) ==0 && param.rho == 0) { continue ;}
 
 		val_type uRc = 0, uTu_omegac = 0, uAc = 0;
-		for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
+
+                //##########################
+
+        	for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
+			size_t r = R.row_idx[idx];
+			uRc += (A.weight[idx]-param.rho) * u[r]*R.val[idx];//FIXIT
+			uAc += u[r]*A.val[idx];//FIXIT
+                        uTu_omegac += (A.weight[idx]-param.rho) * u[r]*u[r];//FIXIT
+		}
+
+		double neg_fp = (uRc)+param.rho*(uAc-uTWHT[c]);  //FIXME
+		double fpp = (uTu_omegac + param.rho*uTu + param.lambda*R.nnz_of_col(c));//FIXME
+		double vc_new = neg_fp/fpp;
+		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
+		v[c] = vc_new;
+
+
+
+
+                //###########################
+/*		for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
 			size_t r = R.row_idx[idx];
 			uRc += u[r]*R.val[idx];
 			uAc += u[r]*A.val[idx];
@@ -487,6 +514,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		double vc_new = neg_fp/fpp;
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
+*/                //###########################
 	}
 	innerfundec_cur += fun_dec;
 } // }}}
@@ -579,41 +607,45 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 	} else {
 		// initial value of the regularization term
 		// H is a zero matrix now.
-		for(size_t t = 0;t < k; t++)
-			for(size_t c = 0; c < R.cols; c++)
+		for(size_t t = 0;t < k; t++)//k就是k
+			for(size_t c = 0; c < R.cols; c++)//R.cols是n
 				if(R.nnz_of_col(c) > 0)
-					H[t][c] = 0;
+					H[t][c] = 0;//这里处理的矩阵的维度是k*n，先是每一行循环，然后每一列循环，只要这一列有一个0，这个点就置0
 		for(size_t t = 0;t < k; t++)
 			for(size_t r = 0; r < R.rows; r++)
 				reg += W[t][r]*W[t][r]*R.nnz_of_row(r);
-	} // }}}
+	} // }}}//这是在算某一个奇怪的regression的数字大小？
+        //另外从上面看出，好像H的尺寸是k*n; W的尺寸是k*r
 
-	for(int oiter = 1; oiter <= maxiter; ++oiter) {
+	for(int oiter = 1; oiter <= maxiter; ++oiter) {//外部是大循环
 		double gnorm = 0, initgnorm=0;
-		double rankfundec = 0;
-		double fundec_max = 0;
+		double rankfundec = 0;//这是一个什么样的缩写啊
+		double fundec_max = 0;//这是什么奇奇怪怪的缩写。。。。
 		int early_stop = 0;
-		for(size_t tt=0; tt < k; tt++) {
+		for(size_t tt=0; tt < k; tt++) {//这里的k是分解后的rankt,对每个rank做循环
 			size_t t = tt;
 			if(early_stop >= 5) break;
 			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
-			vec_t &u = W[t], &v= H[t];
+			vec_t &u = W[t], &v= H[t];//这里是按照feature更新的，要注意
 
 			// Create Rhat = R + Wt Ht^T
-			if (param.warm_start || oiter > 1) {
+			if (param.warm_start || oiter > 1) {//  ||是或的意思,这里和后面，等于在一个oiteration里面，更新了两次RhatTh
 				UpdateRating(R, u, v, true);
 				UpdateRating(Rt, v, u, true);
 			}
 			Itime += omp_get_wtime() - start;
-
+                        
+                        //这块我用不着，因为我不做predict###############
 			if (param.warm_start || oiter > 1) {
 				if(param.do_predict && testR.nnz!=0) {
 					UpdateRating(testR, u, v, true);
 					UpdateRating(testRt, v, u, true);
 				}
 			}
-			if(param.verbose) {
+                        //这块我用不着，因为我不做predict###############
+			
+                        if(param.verbose) {
 				for(size_t c = 0; c < R.cols; c++) reg -= v[c]*v[c]*R.nnz_of_col(c);
 				for(size_t r = 0; r < R.rows; r++) reg -= u[r]*u[r]*R.nnz_of_row(r);
 			}
@@ -622,7 +654,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
-			for(int iter = 1; iter <= maxit; ++iter){
+			for(int iter = 1; iter <= maxit; ++iter){//这是有多少个内部循环
 				// Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
@@ -633,7 +665,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 				// Update W[t]
 				start = omp_get_wtime();
-				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//为什么update W[t]要用At, Rt?
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
 
@@ -646,7 +678,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
-			}
+			}//内循环在这里结束
 
 			// Update R and Rt
 			start = omp_get_wtime();
@@ -665,17 +697,21 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 						oiter, t+1, Htime+Wtime+Rtime, loss, loss_omega, loss_zero, obj, oldobj - obj, initgnorm, reg);
 				oldobj = obj;
 			}
+                        //这里我用不着################
 			if(param.do_predict && testR.nnz!=0) {
 				double test_loss = 0;
 				test_loss = UpdateRating(testR, u, v, false);
 				test_loss = UpdateRating(testRt, v, u, false);
 				printf("rmse %.10g", sqrt(test_loss/testR.nnz));
 			}
+                        //这里我用不着################
 			if(param.verbose) {
 				puts("");
 				fflush(stdout);
 			}
-		}
+		}//这里应该是每个rank更新结束了
+
+
 	        if(param.save_each){
                         FILE *model_fpw = NULL;	
                         FILE *model_fph = NULL;//FIXIT
@@ -685,21 +721,13 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                         
                         if(model_file_name) {
                                 char matrixname[1024];
-
-
                                 sprintf(matrixname, "%s-l%f-r%f-oiter%d.W", model_file_name, lambda, rho, oiter);
-
                                 model_fpw = fopen(matrixname, "w");
                                 if(model_fpw == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
                                         exit(1);
                                 }	
-
-
                                 sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
-
-
-
                                 model_fph = fopen(matrixname, "w");
                                 if(model_fph == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
@@ -715,8 +743,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                 if(do_shuffle)
                                         model.apply_permutation(inverse_row_perm, inverse_col_perm);
                         }
-                }
-	}
+                }//这里是保存这个大部分结束
+	}//这里应该是每个外部循环结束了
 	omp_set_num_threads(num_threads_old);
 } // }}}
 
