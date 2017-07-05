@@ -44,7 +44,7 @@ void exit_with_help()
 	exit(1);
 }
 
-pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *model_file_name)
+pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *count_file_name, char *model_file_name)//FIXME
 {
 	pmf_parameter_t param;   // default values have been set by the constructor
 	int i;
@@ -165,8 +165,11 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 		exit_with_help();
 
 	strcpy(input_file_name, argv[i]);
-
-	if(i<argc-1)
+        
+        i++;//FIXME
+	strcpy(count_file_name, argv[i]);//FIXME
+	
+        if(i<argc-1)
 		strcpy(model_file_name,argv[i+1]);
 	else
 	{
@@ -184,7 +187,7 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 }
 
 
-void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *model_file_name=NULL) { // {{{
+void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *count_file_name, const char *model_file_name=NULL) { // {{{
 	FILE *model_fpw = NULL;	
 	FILE *model_fph = NULL;//FIXIT
 
@@ -213,6 +216,11 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 
 	smat_t training_set, test_set;//声明两个变量
 	pmf_read_data(input_file_name, training_set, test_set, file_fmt);//把data读进来
+
+
+	smat_t count_training_set, count_test_set;//FIXME
+	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
+
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
 
 
@@ -407,16 +415,17 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 
 int main(int argc, char* argv[]){
 	char input_file_name[1024];//声明两个变量，一个存储输入文件名，一个存储模型名字
+	char count_file_name[1024];
 	char model_file_name[1024];
 //char *model_file_name=NULL;
-	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, model_file_name);//对我的输入参数分析，确定后面用哪种模式去解
-
+	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, count_file_name, model_file_name);//对我的输入参数分析，确定后面用哪种模式去解
+        printf("count file name is %s", count_file_name );//FIXME
 	switch (param.solver_type){
 		case CCDR1:
 		case CCDR1_SPEEDUP:
 		case PU_CCDR1_SPEEDUP:
 		case PU_CCDR1://现在我用的是这种方法
-			run_ccdr1(param, input_file_name, model_file_name);
+			run_ccdr1(param, input_file_name, count_file_name, model_file_name);
 			break;
 		case ALS:
 		case PU_ALS:

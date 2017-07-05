@@ -460,7 +460,7 @@ static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_
 
 //这里Hsiang-fu 做了修改，要非常注意
 void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param, mat_t &W, mat_t &H, vec_t &u, vec_t &v, vec_t &uTWHT, double &innerfundec_cur) {  // {{{
-
+        
 	// could be replaced by BLAS operations
 	val_type uTu = dot(u, u); 
 #pragma omp parallel for schedule(kind) shared(uTWHT) 
@@ -484,12 +484,14 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		val_type uRc = 0, uTu_omegac = 0, uAc = 0;
 
                 //##########################
+                if (param.glove_weight){//分界线，有glove weight
 
+                       // printf("in pu_rank_one_update, now have weight\n");
         	for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
 			size_t r = R.row_idx[idx];
-			uRc += (A.weight[idx]-param.rho) * u[r]*R.val[idx];//FIXIT
+			uRc += (R.weight[idx]-param.rho) * u[r]*R.val[idx];//FIXIT
 			uAc += u[r]*A.val[idx];//FIXIT
-                        uTu_omegac += (A.weight[idx]-param.rho) * u[r]*u[r];//FIXIT
+                        uTu_omegac += (R.weight[idx]-param.rho) * u[r]*u[r];//FIXIT
 		}
 
 		double neg_fp = (uRc)+param.rho*(uAc-uTWHT[c]);  //FIXME
@@ -497,12 +499,13 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		double vc_new = neg_fp/fpp;
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
-
-
-
-
+                
+                }else//分界线，不要glove weight
+                
+                {
+                        //printf("in pu_rank_one_update, now don't have weight\n");
                 //###########################
-/*		for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
+		for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
 			size_t r = R.row_idx[idx];
 			uRc += u[r]*R.val[idx];
 			uAc += u[r]*A.val[idx];
@@ -514,7 +517,8 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		double vc_new = neg_fp/fpp;
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
-*/                //###########################
+                }
+              //###########################
 	}
 	innerfundec_cur += fun_dec;
 } // }}}
