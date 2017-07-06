@@ -245,7 +245,44 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
         //for (int idx = 0; idx<count_training_set.nnz; idx++) {printf("%f\n", count_training_set.val[idx]);}
 
 
-	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
+	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR, param.glove_bias);//声明一个模型变量
+
+        //there I need to make some modifications;
+        //adjust W and H, their size are both 302*11815
+        //adjust W[300]  H[301]
+
+
+        //printf("W matrix size is %d, %d\n", model.W.rows, model.W.cols);
+        //printf("H matrix size is %d, %d\n", model.H.rows, model.H.cols);
+        //printf("W matrix 0 rows size is %d\n",model.W[0].size());
+        //printf("W matrix 301 rows size is %d\n",model.W[301].size());
+        //printf("k is %d, k +1 is %d", param.k, param.k+1);
+        
+        //here k is 302
+        /*for (int idx = 0; idx < model.W[0].size(); idx++){
+                model.W[param.k - 2][idx] = 1;
+                //printf("%f ", model.W[300][idx]);
+                model.H[param.k - 1][idx] = 1;
+        }
+*/
+/*
+        for (int idx = 0; idx < model.W[0].size(); idx++){
+                printf("%d \n", model.W[300].at(idx));
+                printf("%d \n", model.H[301].at[idx]);
+        }
+
+*/
+
+//there needs more modifications!!!!!!!!!!!!!!!!!!!!!!!!
+
+
+
+
+
+
+
+
+
 
 
 	// Random permutation for rows and cols of R for better load balancing

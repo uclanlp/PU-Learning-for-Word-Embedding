@@ -1,6 +1,6 @@
 #include "pmf.h"
 
-pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init, val_type global_bias_){
+pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init, val_type global_bias_, int glove_bias_){
 	rows = rows_;
 	cols = cols_;
 	k = k_;
@@ -8,6 +8,7 @@ pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_ty
 	if(do_rand_init)
 		rand_init();
 	global_bias = global_bias_;
+	glove_bias = glove_bias_;//FIXME
 }
 
 #ifdef _MSC_VER

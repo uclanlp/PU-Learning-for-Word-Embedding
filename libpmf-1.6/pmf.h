@@ -53,9 +53,10 @@ class pmf_model_t {//{{{
 		val_type global_bias;
 		enum major_t {ROWMAJOR, COLMAJOR};
 		int major_type;
+                int glove_bias;//FIXME
 
 		pmf_model_t(major_t major_type_=COLMAJOR): major_type(major_type_){}
-		pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init=true, val_type global_bias_=0.0);
+		pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init=true, val_type global_bias_=0.0, int glove_bias_ = 0);//FIXME
 		void rand_init(long seed=0L);
 
 		val_type predict_entry(size_t i, size_t j) const;

@@ -175,7 +175,11 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
 			for(int iter = 1; iter <= maxit; ++iter){
-				// Update H[t]
+				
+                                
+                                
+                                if (t != param.k - 1){
+                                // Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
@@ -187,6 +191,11 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 				}
 				num_updates += R.cols;
 				Htime += omp_get_wtime() - start;
+                                }
+				
+                                
+                                
+                                if (t != param.k - 2){
 				// Update W[t]
 				start = omp_get_wtime();
 #pragma omp parallel for schedule(kind) shared(u,v) reduction(+:innerfundec_cur)
@@ -196,6 +205,12 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 						u[c] = RankOneUpdate(Rt, c, v, lambda*nz, u[c], &innerfundec_cur, param.do_nmf);
 				}
 				num_updates += Rt.cols;
+                                }
+
+
+
+
+
 				if((innerfundec_cur < fundec_max*eps))  {
 					if(iter==1) early_stop+=1;
 					break;
@@ -517,6 +532,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		double vc_new = neg_fp/fpp;
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
+
                 }
               //###########################
 	}
@@ -582,7 +598,13 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         R.weight[idx] = A.weight[idx];//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
         R.weight_t[idx] = A.weight_t[idx];//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
         }
-	
+
+        
+        
+
+        
+
+
         smat_t Rt = R.transpose();
 
         //这里声明了两个dense matrix,如果用维度来说的话，
@@ -664,7 +686,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
-			for(int iter = 1; iter <= maxit; ++iter){//这是有多少个内部循环
+			for(int iter = 1; iter <= maxit; ++iter){//这是有多少个内部循
+                                if (t != param.k -1){
 				// Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
@@ -672,12 +695,20 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				pu_rank_one_update(t, A, R, param, W, H, u, v, vv, innerfundec_cur);
 				num_updates += R.cols;
 				Htime += omp_get_wtime() - start;
+                                }
 
+                                if (t != param.k -2){
 				// Update W[t]
 				start = omp_get_wtime();
 				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//为什么update W[t]要用At, Rt?
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
+                                }
+
+
+
+
+
 
 				if((innerfundec_cur < fundec_max*eps))  {
 					if(iter==1) early_stop+=1;
