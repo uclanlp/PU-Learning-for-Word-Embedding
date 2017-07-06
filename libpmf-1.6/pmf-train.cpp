@@ -220,6 +220,23 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 
 	smat_t count_training_set, count_test_set;//FIXME
 	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
+        
+
+        int x_max = 10;
+        int  alpha = 0.75;
+
+        for(size_t idx=0; idx < training_set.nnz; idx++){
+        training_set.weight[idx] = (count_training_set.val[idx]>x_max)?1:pow(count_training_set.val[idx]/x_max, alpha);
+        training_set.weight_t[idx] = (count_training_set.val_t[idx]>x_max)?1:pow(count_training_set.val_t[idx]/x_max, alpha);
+        }
+
+        for(size_t idx=0; idx < test_set.nnz; idx++){
+        test_set.weight[idx] = (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
+        test_set.weight_t[idx] = (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
+        }
+
+      
+
 
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
 

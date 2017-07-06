@@ -434,6 +434,7 @@ class smat_iterator_t: public entry_iterator_t<val_type>{//这个应该是看spa
 		unsigned *col_idx;
 		size_t *row_ptr;
 		val_type *val_t;
+		val_type *weight_t;//FIXME
 		size_t rows, cols, cur_idx;
 		size_t cur_row;
 };
@@ -455,6 +456,7 @@ class smat_subset_iterator_t: public entry_iterator_t<val_type>{//这个应该�
 		unsigned *col_idx;
 		size_t *row_ptr;
 		val_type *val_t;
+		val_type *weight_t;//FIXME
 		size_t rows, cols, cur_idx;
 		size_t cur_row;
 		std::vector<unsigned>subset;//这个subset是什么样子的？一个向量？还是一个矩阵？或者是把矩阵存成了一个向量？
@@ -651,6 +653,7 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 	unsigned *tmp_row_idx = col_idx;
 	unsigned *tmp_col_idx = row_idx;
 	val_type *tmp_val = val;
+	//val_type *tmp_weight = weight;//FIXME
 	for(size_t idx = 0; idx < _nnz; idx++){
 		entry_t<val_type> rate = entry_it->next();
 		row_ptr[rate.i+1]++;
@@ -658,6 +661,7 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 		tmp_row_idx[idx] = rate.i;
 		tmp_col_idx[idx] = rate.j;
 		tmp_val[idx] = rate.v;
+		//tmp_weight[idx] = rate.weight;//FIXME
 		perm[idx] = idx;
 	}
 	// sort entries into row-majored ordering
@@ -665,6 +669,7 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 	// Generate CSR format//这里面的目的是为了把val_t按照sort的顺序排列？那为什么只动val_t呢？还是单纯为了补上val_t？那col_idx没法解释啊，已经变过了？
 	for(size_t idx = 0; idx < _nnz; idx++) {
 		val_t[idx] = tmp_val[perm[idx]];
+		//weight_t[idx] = tmp_weight[perm[idx]];//FIXME
 		col_idx[idx] = tmp_col_idx[perm[idx]];
 	}
 
@@ -685,6 +690,7 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 			size_t c = (size_t) col_idx[idx];
 			row_idx[col_ptr[c]] = r;
 			val[col_ptr[c]++] = val_t[idx];
+			//weight[col_ptr[c]++] = weight_t[idx];//FIXME
 		}
 	}
 	for(size_t c = cols; c > 0; --c) col_ptr[c] = col_ptr[c-1];
@@ -694,17 +700,19 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 
         //this part is add by me
         //FIXIT
-        int x_max = 10;
-        double alpha = 0.75;
+        //int x_max = 10;
+        //double alpha = 0.75;
         
         
         for(size_t idx=0; idx < nnz; idx++){
         weight[idx] = 1;//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
         weight_t[idx] = 1;//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        }
+
         // FIXIT: implement f(X_ij)
         //val[idx] = log(val[idx]);//FIX it, remove log
         //val_t[idx] = log(val_t[idx]);//FIX it, remove log
-        }
+        
 }
 
 template<typename val_type>
@@ -821,14 +829,16 @@ void smat_t<val_type>::load_from_PETSc(const char *filename) {
 	max_row_nnz = max_col_nnz = 0;
 	for(size_t c = 0; c < cols; c++) max_col_nnz = std::max(max_col_nnz, nnz_of_col(c));
 	for(size_t r = 0; r < rows; r++) max_row_nnz = std::max(max_row_nnz, nnz_of_row(r));
-    for(size_t idx=0; idx < nnz; idx++){
-        weight[idx] = 1;//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
-        weight_t[idx] = 1;//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        
+        
+        //for(size_t idx=0; idx < nnz; idx++){
+        //weight[idx] = 1;//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
+        //weight_t[idx] = 1;//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
         // FIXIT: implement f(X_ij)
         //val[idx] = log(val[idx]);//FIX it, remove log
         //val_t[idx] = log(val_t[idx]);//FIX it, remove log
 
-    }
+   // }
 
 }
 
@@ -925,6 +935,7 @@ smat_iterator_t<val_type>::smat_iterator_t(const smat_t<val_type>& M, int major)
 	col_idx = (major == ROWMAJOR)? M.col_idx: M.row_idx;
 	row_ptr = (major == ROWMAJOR)? M.row_ptr: M.col_ptr;
 	val_t = (major == ROWMAJOR)? M.val_t: M.val;
+	weight_t = (major == ROWMAJOR)? M.weight_t: M.weight;//FIXME
 	rows = (major==ROWMAJOR)? M.rows: M.cols;
 	cols = (major==ROWMAJOR)? M.cols: M.rows;
 	cur_idx = cur_row = 0;
@@ -938,7 +949,7 @@ entry_t<val_type> smat_iterator_t<val_type>::next() {
 		nnz--;
 	else
 		fprintf(stderr,"Error: no more entry to iterate !!\n");
-	entry_t<val_type> ret(cur_row, col_idx[cur_idx], val_t[cur_idx]);
+	entry_t<val_type> ret(cur_row, col_idx[cur_idx], val_t[cur_idx]);//FIXME
 	cur_idx++;
 	return ret;
 }

@@ -577,7 +577,13 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         //这里声明了一个R, R把A里面的信息给复制过来了,根据我自己加的代码。把weight信息给加上了
 
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
-	smat_t Rt = R.transpose();
+        
+        for(size_t idx=0; idx < A.nnz; idx++){
+        R.weight[idx] = A.weight[idx];//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
+        R.weight_t[idx] = A.weight_t[idx];//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        }
+	
+        smat_t Rt = R.transpose();
 
         //这里声明了两个dense matrix,如果用维度来说的话，
         //A = W* H  
