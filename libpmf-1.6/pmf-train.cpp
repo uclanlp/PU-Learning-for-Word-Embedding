@@ -160,6 +160,8 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 	if (param.do_predict != 0 && param.verbose == 0)
 		param.verbose = 1;
 
+        if (param.glove_bias != 0) {param.k += 2;printf("need glove bias, k is %d", param.k);}
+
 	// determine filenames
 	if(i>=argc)
 		exit_with_help();
@@ -216,11 +218,13 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 
 	smat_t training_set, test_set;//声明两个变量
 	pmf_read_data(input_file_name, training_set, test_set, file_fmt);//把data读进来
-
+        if (param.glove_weight){
+        
+        printf("now implementing glove weight\n");
 
 	smat_t count_training_set, count_test_set;//FIXME
 	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
-        
+
 
         int x_max = 10;
         int  alpha = 0.75;
@@ -235,7 +239,10 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
         test_set.weight_t[idx] = (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
         }
 
-      
+        }
+
+
+        //for (int idx = 0; idx<count_training_set.nnz; idx++) {printf("%f\n", count_training_set.val[idx]);}
 
 
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
