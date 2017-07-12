@@ -10,7 +10,7 @@
 #include <cstddef>
 #include <assert.h>
 #include <omp.h>
-
+#include <typeinfo>
 
 #ifdef _MSC_VER
 #if _MSC_VER >= 1600
@@ -102,9 +102,10 @@ template<typename val_type>
 class dmat_t{ // {{{
 	public:
 		size_t rows, cols;//有多少行，多少列
+		bool mem_alloc_by_me;
 	private:
 		val_type *buf;
-		bool mem_alloc_by_me;
+		//bool mem_alloc_by_me;FIXME
 		typedef dvec_t<val_type> vec_t;//把一个类模板，定义为vec_t
 		std::vector<vec_t> vec_set;//使用std里面的vector,vector里的每一个对象都是一个我定义的dense vector
 		void init_vec_set() { // {{{

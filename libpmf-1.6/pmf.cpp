@@ -1,6 +1,6 @@
 #include "pmf.h"
 
-pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init, val_type global_bias_, int glove_bias_){
+pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init, val_type global_bias_){
 	rows = rows_;
 	cols = cols_;
 	k = k_;
@@ -8,7 +8,6 @@ pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_ty
 	if(do_rand_init)
 		rand_init();
 	global_bias = global_bias_;
-	glove_bias = glove_bias_;//FIXME
 }
 
 #ifdef _MSC_VER
@@ -108,10 +107,10 @@ void pmf_model_t::save(FILE *fp){
 	double buf = (double)global_bias;
 	fwrite(&buf, sizeof(double), 1, fp);
 }
-void pmf_model_t::save_embedding(FILE *fpw, FILE *fph){
+void pmf_model_t::save_embedding(FILE *fpw, FILE *fph, int implement_glove_bias){//FIXIT
     printf("???");
-    save_wordembedding(W, fpw, major_type==ROWMAJOR);
-    save_wordembedding(H, fph, major_type==ROWMAJOR);
+    save_wordembedding(W, fpw, major_type==ROWMAJOR, implement_glove_bias);//FIXIT
+    save_wordembedding(H, fph, major_type==ROWMAJOR, implement_glove_bias);//FIXIT
     // Need to save the embedding in ascii file an compare
     // Check how save_mat_t is implemented
 
@@ -160,12 +159,18 @@ void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 	free(buf);
 }//}}}
 
-void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major){//{{{
+void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major, int implement_glove_bias){//{{{
+
 	if (fp == NULL)
 		fprintf(stderr, "output stream is not valid.\n");
 	long m = row_major? A.size(): A[0].size();
 	long n = row_major? A[0].size(): A.size();
-	double *buf = MALLOC(double, m*n);
+        
+        if(implement_glove_bias) n = n - 2;//add by Chao
+
+        double *buf = MALLOC(double, m*n);//这用了吗？？？？？
+
+
 
 	if (row_major) {
 		size_t idx = 0;

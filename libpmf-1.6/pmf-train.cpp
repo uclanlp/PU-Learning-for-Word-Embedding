@@ -35,6 +35,7 @@ void exit_with_help()
         "    -E save_each: save word embedding in each iteration (default 0)\n"
 	//"    -w warm_start: warm start or not for CCDR1 (default 0)\n"
 	"    -b remove_bias: remove bias or not (default 1)\n"
+        "    -X x_max: using for implementing glove's  weight (default 10)\n"
         "    -W implement glove weight: implement glove's  weight (default 0)\n"
         "    -G implement glove bias: add bias for each column and row (default 0)\n"
 	"    -f format: select input format (default 0)\n"
@@ -59,6 +60,9 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 		{
 			case 's':
 				param.solver_type = atoi(argv[i]);
+				break;
+                        case 'X':
+				param.x_max = atoi(argv[i]);
 				break;
 
 			case 'W':
@@ -226,7 +230,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
 
 
-        int x_max = 10;
+        int x_max = param.x_max;
         int  alpha = 0.75;
 
         for(size_t idx=0; idx < training_set.nnz; idx++){
@@ -245,7 +249,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
         //for (int idx = 0; idx<count_training_set.nnz; idx++) {printf("%f\n", count_training_set.val[idx]);}
 
 
-	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR, param.glove_bias);//声明一个模型变量
+	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
 
         //there I need to make some modifications;
         //adjust W and H, their size are both 302*11815
@@ -318,7 +322,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 	if(model_fpw) {
 		if(do_shuffle)
 			model.apply_permutation(row_perm, col_perm);
-		model.save_embedding(model_fpw,model_fph);//FIXIT
+		model.save_embedding(model_fpw,model_fph, param.glove_bias);//FIXIT
 		fclose(model_fpw);
                 fclose(model_fph);
                 

@@ -53,10 +53,9 @@ class pmf_model_t {//{{{
 		val_type global_bias;
 		enum major_t {ROWMAJOR, COLMAJOR};
 		int major_type;
-                int glove_bias;//FIXME
 
 		pmf_model_t(major_t major_type_=COLMAJOR): major_type(major_type_){}
-		pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init=true, val_type global_bias_=0.0, int glove_bias_ = 0);//FIXME
+		pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_type_, bool do_rand_init=true, val_type global_bias_=0.0);//FIXME
 		void rand_init(long seed=0L);
 
 		val_type predict_entry(size_t i, size_t j) const;
@@ -90,7 +89,7 @@ class pmf_model_t {//{{{
 		void apply_permutation(const std::vector<unsigned> &row_perm, const std::vector<unsigned> &col_perm);
 		void apply_permutation(const unsigned *row_perm=NULL, const unsigned *col_perm=NULL);
 		void save(FILE *fp);
-		void save_embedding(FILE *fpw, FILE *fph);
+		void save_embedding(FILE *fpw, FILE *fph, int implement_glove_bias = 0);//FIXIT
 		void load(FILE *fp, major_t major_type_);
 	private:
 		void mat_rand_init(mat_t &X, size_t m, size_t n, long seed);
@@ -116,6 +115,7 @@ class pmf_parameter_t {//{{{
                 int save_each;
 		int glove_bias;
 		int glove_weight;
+		int x_max;
 		pmf_parameter_t() {
 			solver_type = CCDR1;
 			k = 10;
@@ -143,6 +143,7 @@ class pmf_parameter_t {//{{{
                         save_each = 0;
 			glove_bias = 0;
 			glove_weight = 0;
+			x_max = 10;
 		}
 };//}}}
 
@@ -160,7 +161,7 @@ void sgd_pu(blocks_t &training_set, blocks_t &test_set, pmf_parameter_t &param, 
 
 /*utility functions*/
 void load_mat_t(FILE *fp, mat_t &A, bool row_major=false);
-void save_wordembedding(const mat_t &A, FILE *fp, bool row_major=false);
+void save_wordembedding(const mat_t &A, FILE *fp, bool row_major=false, int implement_glove_bias = 0);
 void save_mat_t(const mat_t &A, FILE *fp, bool row_major=false);
 void pmf_read_data(const char* srcdir, smat_t &training_set, smat_t &test_set, smat_t::format_t fmt = smat_t::TXT);
 void pmf_read_data(const char* srcdir, blocks_t &training_set, blocks_t &test_set, smat_t::format_t fmt = smat_t::TXT);

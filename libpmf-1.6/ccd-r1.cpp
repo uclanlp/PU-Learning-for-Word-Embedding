@@ -594,11 +594,12 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
         
+	if (param.glove_weight){ 
         for(size_t idx=0; idx < A.nnz; idx++){
         R.weight[idx] = A.weight[idx];//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
         R.weight_t[idx] = A.weight_t[idx];//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
         }
-
+	}
         
         
 
@@ -648,6 +649,13 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				reg += W[t][r]*W[t][r]*R.nnz_of_row(r);
 	} // }}}//这是在算某一个奇怪的regression的数字大小？
         //另外从上面看出，好像H的尺寸是k*n; W的尺寸是k*r
+        if (param.glove_bias){
+        for (int idx = 0; idx < model.W[0].size(); idx++){
+                model.W[param.k - 2][idx] = 1;
+                model.W[param.k - 1][idx] = 0;
+                model.H[param.k - 1][idx] = 1;
+        }
+        }
 
 	for(int oiter = 1; oiter <= maxiter; ++oiter) {//外部是大循环
 		double gnorm = 0, initgnorm=0;
@@ -687,6 +695,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
 			for(int iter = 1; iter <= maxit; ++iter){//这是有多少个内部循
+                            if(param.glove_bias){
                                 if (t != param.k -1){
 				// Update H[t]
 				start = omp_get_wtime();
@@ -704,6 +713,23 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
                                 }
+                            }
+                            else{
+				// Update H[t]
+				start = omp_get_wtime();
+				gnorm = 0;
+				innerfundec_cur = 0;
+				pu_rank_one_update(t, A, R, param, W, H, u, v, vv, innerfundec_cur);
+				num_updates += R.cols;
+				Htime += omp_get_wtime() - start;
+
+				// Update W[t]
+				start = omp_get_wtime();
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//为什么update W[t]要用At, Rt?
+				num_updates += Rt.cols;
+				Wtime += omp_get_wtime() - start;
+
+                            }
 
 
 
@@ -778,7 +804,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                         if(model_fpw) {
                                 if(do_shuffle)
                                         model.apply_permutation(row_perm, col_perm);
-                                model.save_embedding(model_fpw,model_fph);//FIXIT
+                                model.save_embedding(model_fpw,model_fph, param.glove_bias);//FIXIT
                                 fclose(model_fpw);
                                 fclose(model_fph);
                                 if(do_shuffle)
