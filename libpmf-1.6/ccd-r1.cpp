@@ -576,36 +576,23 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 	} // }}}
         //这块我不用****************************************
 	
-        
-        
-        
-        
         //这里复制了 &A, At, &testR, testRt
-
         // Create transpose view of A and R
 	smat_t &A = training_set, At = A.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
-
-
 	smat_iterator_t<val_type> it(A);//这里生命了一个smat迭代器,next()每个返回值是x, y, val的一个数组
 
-
         //这里声明了一个R, R把A里面的信息给复制过来了,根据我自己加的代码。把weight信息给加上了
-
+ 
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
         
 	if (param.glove_weight){ 
         for(size_t idx=0; idx < A.nnz; idx++){
         R.weight[idx] = A.weight[idx];//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
         R.weight_t[idx] = A.weight_t[idx];//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
-        }
+        }  
 	}
         
-        
-
-        
-
-
         smat_t Rt = R.transpose();
 
         //这里声明了两个dense matrix,如果用维度来说的话，
@@ -668,7 +655,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
 			vec_t &u = W[t], &v= H[t];//这里是按照feature更新的，要注意
-
+                        //这里面做的工作是搞式子3.16
 			// Create Rhat = R + Wt Ht^T
 			if (param.warm_start || oiter > 1) {//  ||是或的意思,这里和后面，等于在一个oiteration里面，更新了两次RhatTh
 				UpdateRating(R, u, v, true);
@@ -690,6 +677,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				for(size_t r = 0; r < R.rows; r++) reg -= u[r]*u[r]*R.nnz_of_row(r);
 			}
 
+                        //pu_rank_one_update是式子3.10
 			gnorm = 0, initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
@@ -731,11 +719,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
                             }
 
-
-
-
-
-
 				if((innerfundec_cur < fundec_max*eps))  {
 					if(iter==1) early_stop+=1;
 					break;
@@ -746,7 +729,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
 			}//内循环在这里结束
-
+                        
+                        //这里是update R and Rt
 			// Update R and Rt
 			start = omp_get_wtime();
 			UpdateRating(R, u, v, false);
@@ -788,13 +772,14 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                         
                         if(model_file_name) {
                                 char matrixname[1024];
-                                sprintf(matrixname, "%s-l%f-r%f-oiter%d.W", model_file_name, lambda, rho, oiter);
+                                sprintf(matrixname, "%s-l%f-r%f-oiter%d-gweight%d-xmax%d-gbias%d.W", model_file_name, lambda, rho, oiter, param.glove_weight, param.x_max, param.glove_bias);
                                 model_fpw = fopen(matrixname, "w");
                                 if(model_fpw == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
                                         exit(1);
                                 }	
-                                sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
+                               // sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
+                                sprintf(matrixname, "%s-l%f-r%f-oiter%d-gweight%d-xmax%d-gbias%d.H", model_file_name, lambda, rho, oiter, param.glove_weight, param.x_max, param.glove_bias);
                                 model_fph = fopen(matrixname, "w");
                                 if(model_fph == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);

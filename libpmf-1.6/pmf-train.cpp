@@ -7,7 +7,7 @@ bool do_shuffle = true;
 void exit_with_help()
 {
 	printf(
-	"Usage: omp-pmf-train [options] data_dir [model_filename]\n"
+	"Usage: omp-pmf-train [options] data_dir weight_dir [model_filename]\n"
 	"options:\n"
 	"    -s type : set type of solver (default 0)\n"
 	"    	 0 -- CCDR1 with fundec stopping condition\n"
@@ -38,6 +38,10 @@ void exit_with_help()
         "    -X x_max: using for implementing glove's  weight (default 10)\n"
         "    -W implement glove weight: implement glove's  weight (default 0)\n"
         "    -G implement glove bias: add bias for each column and row (default 0)\n"
+        "        0 --do not implement glove bias\n"
+        "        1 --implement glove bias, but save the result without bias term\n"
+        "        2 --implement glove bias, and save the result with bias term and 1\n"
+        "        !!!this is important, please note\n"
 	"    -f format: select input format (default 0)\n"
 	"        0 -- plaintxt format\n"
 	"        1 -- PETSc format\n"
@@ -132,7 +136,7 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 
 
 			case 'q':
-				param.verbose = atoi(argv[i]);
+                                param.verbose = atoi(argv[i]);
 				break;
 
 			case 'N':
@@ -163,8 +167,8 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 
 	if (param.do_predict != 0 && param.verbose == 0)
 		param.verbose = 1;
-
-        if (param.glove_bias != 0) {param.k += 2;printf("need glove bias, k is %d", param.k);}
+        //printf("glove bias term is %d\n", param.glove_bias);
+        if (param.glove_bias != 0) {param.k += 2;printf("need glove bias, k is %d\n", param.k);}
 
 	// determine filenames
 	if(i>=argc)
@@ -204,14 +208,15 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
       	if(model_file_name) {
 		char matrixname[1024];
 
-                sprintf(matrixname, "%s-l%f-r%f-iter%d.final.W", model_file_name, lambda, rho, maxiter);
+                sprintf(matrixname, "%s-l%f-r%f-iter%d-gweight%d-xmax%d-gbias%d.final.W", model_file_name, lambda, rho, maxiter, param.glove_weight, param.x_max, param.glove_bias);
 		model_fpw = fopen(matrixname, "w");
                 if(model_fpw == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}	
 
-                sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
+                //sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
+                sprintf(matrixname, "%s-l%f-r%f-iter%d-gweight%d-xmax%d-gbias%d.final.H", model_file_name, lambda, rho, maxiter, param.glove_weight, param.x_max, param.glove_bias);
                 model_fph = fopen(matrixname, "w");
 		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
@@ -222,26 +227,32 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 
 	smat_t training_set, test_set;//声明两个变量
 	pmf_read_data(input_file_name, training_set, test_set, file_fmt);//把data读进来
+        
+
+        
         if (param.glove_weight){
         
         printf("now implementing glove weight\n");
 
 	smat_t count_training_set, count_test_set;//FIXME
 	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
+        
 
 
-        int x_max = param.x_max;
-        int  alpha = 0.75;
 
+        float x_max = param.x_max;
+        float  alpha = 0.75;
+        printf("x_max is %f\n", x_max);
         for(size_t idx=0; idx < training_set.nnz; idx++){
         training_set.weight[idx] = (count_training_set.val[idx]>x_max)?1:pow(count_training_set.val[idx]/x_max, alpha);
         training_set.weight_t[idx] = (count_training_set.val_t[idx]>x_max)?1:pow(count_training_set.val_t[idx]/x_max, alpha);
         }
 
         for(size_t idx=0; idx < test_set.nnz; idx++){
-        test_set.weight[idx] = (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
-        test_set.weight_t[idx] = (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
+        test_set.weight[idx] = 1;// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
+        test_set.weight_t[idx] =1;// (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
         }
+
 
         }
 
@@ -274,20 +285,8 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
                 printf("%d \n", model.W[300].at(idx));
                 printf("%d \n", model.H[301].at[idx]);
         }
-
 */
-
 //there needs more modifications!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-
-
-
-
-
-
-
 
 	// Random permutation for rows and cols of R for better load balancing
         //看看是不是要shuffle一下
@@ -301,11 +300,6 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 		training_set.apply_permutation(row_perm, col_perm);
 		test_set.apply_permutation(row_perm, col_perm);
 	}
-
-
-
-
-
 
 	puts("starts!");
 	double time = omp_get_wtime();
@@ -328,12 +322,6 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
                 
 	}
 
-
-
-
-
-
-
 	return ;
 } // }}}
 
@@ -341,8 +329,6 @@ void run_als(pmf_parameter_t &param, const char *input_file_name, const char *mo
 	FILE *model_fpw = NULL;
         FILE *model_fph = NULL;
         
-
-
         if(model_file_name) {
         	char matrixname[1024];
                 sprintf(matrixname, "%s.W", model_file_name);
@@ -426,15 +412,6 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 
 	}
 	
-
-
-
-
-
-	
-
-
-
 	blocks_t training_set, test_set;
 	//pmf_read_data(input_file_name, training_set, test_set, file_fmt);
 	pmf_read_data(input_file_name, training_set, test_set);
@@ -484,7 +461,7 @@ int main(int argc, char* argv[]){
 	char model_file_name[1024];
 //char *model_file_name=NULL;
 	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, count_file_name, model_file_name);//对我的输入参数分析，确定后面用哪种模式去解
-        printf("count file name is %s", count_file_name );//FIXME
+        //printf("count file name is %s", count_file_name );//FIXME
 	switch (param.solver_type){
 		case CCDR1:
 		case CCDR1_SPEEDUP:
