@@ -29,7 +29,7 @@ inline val_type RankOneUpdate(const smat_t &R, const int j, const vec_t &u, cons
 	return newvj;
 } // }}}
 
-//我也大量使用了这个方程，要注意
+//I use this function a lot of times, need to pay a lot of attention
 inline double UpdateRating(smat_t &R, const vec_t &Wt2, const vec_t &Ht2) { // {{{
 	double loss=0;
 #pragma omp parallel for schedule(kind) reduction(+:loss)
@@ -442,7 +442,7 @@ static inline val_type dot(const vec_t& u, const vec_t& v) { // {{{
 		ret += u[t]*v[t];
 	return ret;
 } // }}}
-//这个方程我也用到了，不过应该不太影响结果
+//I also use this function, but it will not affects the result.
 static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_model_t &model, double *loss_omega=NULL, double *loss_zero=NULL) { // {{{
 	double omega_part = 0.0;
 #pragma omp parallel for schedule(static) reduction(+:omega_part)
@@ -473,7 +473,7 @@ static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_
 	return zero_part+omega_part;
 } // }}}
 
-//这里Hsiang-fu 做了修改，要非常注意
+//Here Hsiang-fu make modifications, pay special attention!
 void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param, mat_t &W, mat_t &H, vec_t &u, vec_t &v, vec_t &uTWHT, double &innerfundec_cur) {  // {{{
         
 	// could be replaced by BLAS operations
@@ -499,7 +499,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		val_type uRc = 0, uTu_omegac = 0, uAc = 0;
 
                 //##########################
-                if (param.glove_weight){//分界线，有glove weight
+                if (param.glove_weight){//boundary! if I use glove weight
 
                        // printf("in pu_rank_one_update, now have weight\n");
         	for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
@@ -515,7 +515,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
                 
-                }else//分界线，不要glove weight
+                }else//boundary, if I don't use glove weight
                 
                 {
                         //printf("in pu_rank_one_update, now don't have weight\n");
@@ -541,7 +541,7 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 
 // Cyclic Coordinate Descent for Matrix Factorization with uniform rho
 
-//这个方程非常重要，一定要仔细仔细看
+//this is the main functionn for ccdr1_pu, look it carefully
 
 
 void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model, int do_shuffle, std::vector<unsigned> row_perm, std::vector<unsigned> col_perm, std::vector<unsigned> inverse_row_perm, std::vector<unsigned> inverse_col_perm, const char *model_file_name){ // {{{
@@ -557,7 +557,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 	omp_set_num_threads(param.threads);
 
-        //这块我不用****************************************
+        //I don't use this part****************************************
 	if(param.remove_bias) { // {{{
 		double bias = training_set.get_global_mean();
 		training_set.remove_bias(bias);
@@ -574,15 +574,15 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 					model.H[t][c] = 0;
 			}
 	} // }}}
-        //这块我不用****************************************
+        //I don't use this part****************************************
 	
-        //这里复制了 &A, At, &testR, testRt
+        //copy  &A, At, &testR, testRt
         // Create transpose view of A and R
 	smat_t &A = training_set, At = A.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
-	smat_iterator_t<val_type> it(A);//这里生命了一个smat迭代器,next()每个返回值是x, y, val的一个数组
+	smat_iterator_t<val_type> it(A);//here I announce a iterator, the return of next() is a tuples contains (x, y, val)
 
-        //这里声明了一个R, R把A里面的信息给复制过来了,根据我自己加的代码。把weight信息给加上了
+        //here, announce R, R just copy A's information, and I modified the code to copy weight information from A to R
  
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
         
@@ -595,9 +595,9 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         
         smat_t Rt = R.transpose();
 
-        //这里声明了两个dense matrix,如果用维度来说的话，
+        //here I announce two dense matrix, from the deminsion aspect:
         //A = W* H  
-        //m*n = m*k * k*n
+        //m*n = m*k * (n*k)T
 	
         mat_t &W = model.W, &H = model.H;
         //这里实际上是一个dense vector，在这里使用长度来初始化的，uu是一个竖条，vv是一个横行?这里我是不是理解错了
@@ -634,8 +634,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 		for(size_t t = 0;t < k; t++)
 			for(size_t r = 0; r < R.rows; r++)
 				reg += W[t][r]*W[t][r]*R.nnz_of_row(r);
-	} // }}}//这是在算某一个奇怪的regression的数字大小？
-        //另外从上面看出，好像H的尺寸是k*n; W的尺寸是k*r
+	} // }}}//what does reg mean here
+        //H is k*n, W is k*r?
         if (param.glove_bias){
         for (int idx = 0; idx < model.W[0].size(); idx++){
                 model.W[param.k - 2][idx] = 1;
@@ -644,45 +644,44 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         }
         }
 
-	for(int oiter = 1; oiter <= maxiter; ++oiter) {//外部是大循环
+	for(int oiter = 1; oiter <= maxiter; ++oiter) {//this is outer iteration
 		double gnorm = 0, initgnorm=0;
-		double rankfundec = 0;//这是一个什么样的缩写啊
-		double fundec_max = 0;//这是什么奇奇怪怪的缩写。。。。
+		double rankfundec = 0;//what does this abbreviation mean?
+		double fundec_max = 0;//what does this abbreviation mean?
 		int early_stop = 0;
-		for(size_t tt=0; tt < k; tt++) {//这里的k是分解后的rankt,对每个rank做循环
+		for(size_t tt=0; tt < k; tt++) {//here k is rank, do iteration by each rank
 			size_t t = tt;
 			if(early_stop >= 5) break;
 			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
-			vec_t &u = W[t], &v= H[t];//这里是按照feature更新的，要注意
-                        //这里面做的工作是搞式子3.16
+			vec_t &u = W[t], &v= H[t];//please, there update by feature
+                        //this part deals with formula 3.16
 			// Create Rhat = R + Wt Ht^T
-			if (param.warm_start || oiter > 1) {//  ||是或的意思,这里和后面，等于在一个oiteration里面，更新了两次RhatTh
+			if (param.warm_start || oiter > 1) {//  || is or
 				UpdateRating(R, u, v, true);
 				UpdateRating(Rt, v, u, true);
 			}
 			Itime += omp_get_wtime() - start;
                         
-                        //这块我用不着，因为我不做predict###############
+                        //I don't need this part, bucause I don't do predict###############
 			if (param.warm_start || oiter > 1) {
 				if(param.do_predict && testR.nnz!=0) {
 					UpdateRating(testR, u, v, true);
 					UpdateRating(testRt, v, u, true);
 				}
 			}
-                        //这块我用不着，因为我不做predict###############
-			
+                        //I don't need this part, bucause I don't do predict###############
                         if(param.verbose) {
 				for(size_t c = 0; c < R.cols; c++) reg -= v[c]*v[c]*R.nnz_of_col(c);
 				for(size_t r = 0; r < R.rows; r++) reg -= u[r]*u[r]*R.nnz_of_row(r);
 			}
 
-                        //pu_rank_one_update是式子3.10
+                        //pu_rank_one_update if formula 3.10
 			gnorm = 0, initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
 			//	if(oiter > 1) maxit *= 2;
-			for(int iter = 1; iter <= maxit; ++iter){//这是有多少个内部循
+			for(int iter = 1; iter <= maxit; ++iter){//there decisec how many inner iterations
                             if(param.glove_bias){
                                 if (t != param.k -1){
 				// Update H[t]
@@ -697,7 +696,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                 if (t != param.k -2){
 				// Update W[t]
 				start = omp_get_wtime();
-				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//为什么update W[t]要用At, Rt?
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
                                 }
@@ -713,7 +712,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 				// Update W[t]
 				start = omp_get_wtime();
-				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//为什么update W[t]要用At, Rt?
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//why update W[t] needs At and Rt?
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
 
@@ -728,9 +727,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
-			}//内循环在这里结束
+			}//the end of inner iteration
                         
-                        //这里是update R and Rt
 			// Update R and Rt
 			start = omp_get_wtime();
 			UpdateRating(R, u, v, false);
@@ -748,19 +746,19 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 						oiter, t+1, Htime+Wtime+Rtime, loss, loss_omega, loss_zero, obj, oldobj - obj, initgnorm, reg);
 				oldobj = obj;
 			}
-                        //这里我用不着################
+                        //I don't need this part################
 			if(param.do_predict && testR.nnz!=0) {
 				double test_loss = 0;
 				test_loss = UpdateRating(testR, u, v, false);
 				test_loss = UpdateRating(testRt, v, u, false);
 				printf("rmse %.10g", sqrt(test_loss/testR.nnz));
 			}
-                        //这里我用不着################
+                        //I don't need this part################
 			if(param.verbose) {
 				puts("");
 				fflush(stdout);
 			}
-		}//这里应该是每个rank更新结束了
+		}//the end of updating each rank
 
 
 	        if(param.save_each){
@@ -795,8 +793,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                 if(do_shuffle)
                                         model.apply_permutation(inverse_row_perm, inverse_col_perm);
                         }
-                }//这里是保存这个大部分结束
-	}//这里应该是每个外部循环结束了
+                }//end of save_each partition
+	}//end of outer iteration
 	omp_set_num_threads(num_threads_old);
 } // }}}
 
