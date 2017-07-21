@@ -449,7 +449,7 @@ static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_
 	for(long idx = 0; idx < R.nnz; idx++) {
 		val_type tmp = R.val[idx];
 		//loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
-		omega_part += tmp*tmp;
+		omega_part += R.weight[idx]*tmp*tmp;
 	}
 
 	double zero_part = 0.0;
@@ -770,14 +770,14 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                         
                         if(model_file_name) {
                                 char matrixname[1024];
-                                sprintf(matrixname, "%s-l%f-r%f-oiter%d-gweight%d-xmax%d-gbias%d.W", model_file_name, lambda, rho, oiter, param.glove_weight, param.x_max, param.glove_bias);
+                		sprintf(matrixname, "%s.iter%d.words", model_file_name, oiter);
                                 model_fpw = fopen(matrixname, "w");
                                 if(model_fpw == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
                                         exit(1);
                                 }	
                                // sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
-                                sprintf(matrixname, "%s-l%f-r%f-oiter%d-gweight%d-xmax%d-gbias%d.H", model_file_name, lambda, rho, oiter, param.glove_weight, param.x_max, param.glove_bias);
+                		sprintf(matrixname, "%s.iter%d.contexts", model_file_name, oiter);
                                 model_fph = fopen(matrixname, "w");
                                 if(model_fph == NULL) {
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
