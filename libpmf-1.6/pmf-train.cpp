@@ -1,5 +1,7 @@
 #include <cstring>
 #include "pmf.h"
+#include <sys/stat.h>
+#include <sys/types.h>
 
 smat_t::format_t file_fmt = smat_t::TXT;
 bool do_shuffle = true;
@@ -7,7 +9,7 @@ bool do_shuffle = true;
 void exit_with_help()
 {
 	printf(
-	"Usage: omp-pmf-train [options] data_dir weight_dir [model_filename]\n"
+	"Usage: omp-pmf-train [options] data_dir weight_dir output_folder_name [model_filename]\n"
 	"options:\n"
 	"    -s type : set type of solver (default 0)\n"
 	"    	 0 -- CCDR1 with fundec stopping condition\n"
@@ -49,7 +51,7 @@ void exit_with_help()
 	exit(1);
 }
 
-pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *count_file_name, char *model_file_name)//FIXME
+pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *count_file_name, char* output_folder_name, char *model_file_name)//FIXME
 {
 	pmf_parameter_t param;   // default values have been set by the constructor
 	int i;
@@ -179,6 +181,9 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
         i++;//FIXME
 	strcpy(count_file_name, argv[i]);//FIXME
 	
+        i++;//FIXME
+	strcpy(output_folder_name, argv[i]);//FIXME
+	
         if(i<argc-1)
 		strcpy(model_file_name,argv[i+1]);
 	else
@@ -208,7 +213,7 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
       	if(model_file_name) {
 		char matrixname[1024];
 
-                sprintf(matrixname, "%s-l%f-r%f-iter%d-gweight%d-xmax%d-gbias%d.final.W", model_file_name, lambda, rho, maxiter, param.glove_weight, param.x_max, param.glove_bias);
+                sprintf(matrixname, "%s.iter%d.final.words", model_file_name, maxiter);
 		model_fpw = fopen(matrixname, "w");
                 if(model_fpw == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
@@ -216,57 +221,45 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 		}	
 
                 //sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
-                sprintf(matrixname, "%s-l%f-r%f-iter%d-gweight%d-xmax%d-gbias%d.final.H", model_file_name, lambda, rho, maxiter, param.glove_weight, param.x_max, param.glove_bias);
+                sprintf(matrixname, "%s.iter%d.final.contexts", model_file_name, maxiter);
                 model_fph = fopen(matrixname, "w");
 		if(model_fph == NULL) {
 			fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
 			exit(1);
 		}
-
 	}
 
-	smat_t training_set, test_set;//声明两个变量
-	pmf_read_data(input_file_name, training_set, test_set, file_fmt);//把data读进来
-        
-
-        
+	smat_t training_set, test_set;
+	pmf_read_data(input_file_name, training_set, test_set, file_fmt);
         if (param.glove_weight){
-        
         printf("now implementing glove weight\n");
-
-	smat_t count_training_set, count_test_set;//FIXME
+        int x_max = param.x_max;
+        float  alpha = 0.75;
+        printf("x_max is %d\n", x_max);
+        smat_t count_training_set, count_test_set;//FIXME
 	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
         
-
-
-
-        float x_max = param.x_max;
-        float  alpha = 0.75;
-        printf("x_max is %f\n", x_max);
         for(size_t idx=0; idx < training_set.nnz; idx++){
         training_set.weight[idx] = (count_training_set.val[idx]>x_max)?1:pow(count_training_set.val[idx]/x_max, alpha);
         training_set.weight_t[idx] = (count_training_set.val_t[idx]>x_max)?1:pow(count_training_set.val_t[idx]/x_max, alpha);
         }
 
         for(size_t idx=0; idx < test_set.nnz; idx++){
-        test_set.weight[idx] = 1;// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
-        test_set.weight_t[idx] =1;// (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
+        test_set.weight[idx] =  (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
+        test_set.weight_t[idx] = (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
         }
-
-
+        /*
+        for(size_t idx=0; idx < test_set.nnz; idx++){
+        printf("count_test_set, %f\n",count_test_set.val[idx]);// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
+        printf("test_set, %f\n",test_set.weight[idx]);// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
         }
-
-
-        //for (int idx = 0; idx<count_training_set.nnz; idx++) {printf("%f\n", count_training_set.val[idx]);}
-
-
-	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);//声明一个模型变量
+        */
+        }
+	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);
 
         //there I need to make some modifications;
         //adjust W and H, their size are both 302*11815
         //adjust W[300]  H[301]
-
-
         //printf("W matrix size is %d, %d\n", model.W.rows, model.W.cols);
         //printf("H matrix size is %d, %d\n", model.H.rows, model.H.cols);
         //printf("W matrix 0 rows size is %d\n",model.W[0].size());
@@ -289,7 +282,6 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 //there needs more modifications!!!!!!!!!!!!!!!!!!!!!!!!
 
 	// Random permutation for rows and cols of R for better load balancing
-        //看看是不是要shuffle一下
 
 	std::vector<unsigned> row_perm, inverse_row_perm;
 	std::vector<unsigned> col_perm, inverse_col_perm;
@@ -308,7 +300,6 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 	else if(param.solver_type == CCDR1_SPEEDUP)
 		ccdr1_speedup(training_set, test_set, param, model);
 	
-        //在这里，把training_set, test_set, parameter, model给进去
         if(param.solver_type == PU_CCDR1)
 		ccdr1_pu(training_set, test_set, param, model, do_shuffle, row_perm, col_perm, inverse_row_perm, inverse_col_perm, model_file_name);
 	printf("Wall-time: %lg secs\n", omp_get_wtime() - time);
@@ -456,17 +447,27 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 
 
 int main(int argc, char* argv[]){
-	char input_file_name[1024];//声明两个变量，一个存储输入文件名，一个存储模型名字
+        
+	char input_file_name[1024];
 	char count_file_name[1024];
+        char output_folder_name[1024];
 	char model_file_name[1024];
+	char model_file_name_tmp[1024];
 //char *model_file_name=NULL;
-	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, count_file_name, model_file_name);//对我的输入参数分析，确定后面用哪种模式去解
+	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, count_file_name, output_folder_name, model_file_name);
         //printf("count file name is %s", count_file_name );//FIXME
-	switch (param.solver_type){
+        int result = mkdir(output_folder_name, 0777);
+        //printf("output_folder_name is %s\n", output_folder_name);
+        //printf("initial model_file_name is %s\n", model_file_name);
+        sprintf(model_file_name_tmp,"%s/%s",output_folder_name, model_file_name);
+        //printf("model_file_name_tmp is %s\n", model_file_name_tmp);
+        sprintf(model_file_name,"%s", model_file_name_tmp);
+        //printf("final model_file_name is %s\n", model_file_name);
+        switch (param.solver_type){
 		case CCDR1:
 		case CCDR1_SPEEDUP:
 		case PU_CCDR1_SPEEDUP:
-		case PU_CCDR1://现在我用的是这种方法
+		case PU_CCDR1:
 			run_ccdr1(param, input_file_name, count_file_name, model_file_name);
 			break;
 		case ALS:

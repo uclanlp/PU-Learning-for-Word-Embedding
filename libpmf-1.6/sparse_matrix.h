@@ -55,34 +55,32 @@ template<typename val_type> void smat_x_dmat(val_type a, const smat_t<val_type> 
 template<typename val_type>
 class dvec_t{ 
         // {{{
-        //属性：长度，数据，mem_alloc_by_me
-        //函数：默认构造函数，复制构造函数，带参数的构造函数，析构函数，重置=[]运算符（const 与否），取size， 取data
 	public:
 		size_t len;
 	private:
-		bool mem_alloc_by_me;//这个好像是决定，只是一个指针or是全部数据
-		val_type *buf;//存储具体数据用的
+		bool mem_alloc_by_me;
+		val_type *buf;
 	public:
 		dvec_t(): len(0), buf(NULL), mem_alloc_by_me(false) {}//Constructor
-		dvec_t(const dvec_t& v): len(0), buf(0), mem_alloc_by_me(false) {*this=v;}//复制构造函数，但是这好像是浅复制？
+		dvec_t(const dvec_t& v): len(0), buf(0), mem_alloc_by_me(false) {*this=v;}
 		dvec_t(size_t len, val_type *buf=NULL): len(len), buf(buf), mem_alloc_by_me(false){
 			if(buf == NULL && len != 0) {
 				this->buf = MALLOC(val_type, len);
 				mem_alloc_by_me = true;
 			}
-		}//这个是一个构造函数，有初始值（长度），这里面也分配好空间了
-		~dvec_t() {if(mem_alloc_by_me) free(buf);}//析构函数
-		dvec_t& operator=(const dvec_t<val_type> &other) { //重置=运算符，返回命名后，我的对象的这个首地址 {{{
+		}
+		~dvec_t() {if(mem_alloc_by_me) free(buf);}
+		dvec_t& operator=(const dvec_t<val_type> &other) { 
 			if(this == &other)
 				return *this;
-			if(other.mem_alloc_by_me == false) { // shallow copy，看那个人有没有自己的空间，如果他没有自己的空间，那直接我也浅复制好了，如果他有自己的空间，那就得深复制了，看我自己有没有分配，如果已经分配了，就resize一下，如果还没分配，就重新分配
+			if(other.mem_alloc_by_me == false) { 
 				if(mem_alloc_by_me) { free(buf); buf = NULL;}
 				len = other.len;
 				buf = other.buf;
 				mem_alloc_by_me = false;
 			} else { // deep copy
 				len = other.len;
-				if(mem_alloc_by_me)//如果已经分配好了，就调整一下大小，如果没有分配好，就重新分配
+				if(mem_alloc_by_me)
 					buf = (val_type*) realloc(buf, sizeof(val_type)*len);
 				else
 					buf = MALLOC(val_type, len);
@@ -94,29 +92,29 @@ class dvec_t{
 		size_t size() const {return len;};
 		val_type& operator[](size_t idx) {return buf[idx];}
 		const val_type& operator[](size_t idx) const {return buf[idx];}
-		val_type* data() {return buf;}//有个类属性，叫data
+		val_type* data() {return buf;}
 		const val_type* data() const {return buf;}
 }; // }}}
 
 template<typename val_type>
 class dmat_t{ // {{{
 	public:
-		size_t rows, cols;//有多少行，多少列
+		size_t rows, cols;
 		bool mem_alloc_by_me;
 	private:
 		val_type *buf;
 		//bool mem_alloc_by_me;FIXME
-		typedef dvec_t<val_type> vec_t;//把一个类模板，定义为vec_t
-		std::vector<vec_t> vec_set;//使用std里面的vector,vector里的每一个对象都是一个我定义的dense vector
+		typedef dvec_t<val_type> vec_t;
+		std::vector<vec_t> vec_set;
 		void init_vec_set() { // {{{
 			vec_set.resize(rows);
 			for(size_t r = 0; r < rows; r++)
-				vec_set[r] = vec_t(cols, &buf[r*cols]);//这是给长度，给容量大小的那种构造函数，去新建一个vector对象?但是构造函数，还是不太看得懂//最新问题，等于这句话后半句，&buf[r*cols]，直接新建了一个数组，然后这里是他首项的地址？
-		} // }}}
+				vec_set[r] = vec_t(cols, &buf[r*cols]);
+		} 
 	public:
-		dmat_t(): rows(0), cols(0), buf(NULL), mem_alloc_by_me(false) {}//构造函数
-		dmat_t(const dmat_t& other): rows(0), cols(0), buf(NULL), mem_alloc_by_me(false){*this = other;}//浅复制的构造函数？
-		dmat_t(size_t rows, size_t cols, val_type *buf=NULL): rows(rows), cols(0), buf(buf), mem_alloc_by_me(false) { // {{{//这个是构造函数
+		dmat_t(): rows(0), cols(0), buf(NULL), mem_alloc_by_me(false) {}
+		dmat_t(const dmat_t& other): rows(0), cols(0), buf(NULL), mem_alloc_by_me(false){*this = other;}
+		dmat_t(size_t rows, size_t cols, val_type *buf=NULL): rows(rows), cols(0), buf(buf), mem_alloc_by_me(false) { 
 			if(buf == NULL) {
 				this->buf = MALLOC(val_type, rows*cols);
 				mem_alloc_by_me = true;
