@@ -13,7 +13,7 @@ Word embedding is a key component in many downstream applications in processing 
 
 - ### Source Code
 
-To reproduce result on text8 dataset, please run demo.sh file. It could automatically generate all results on the text8 dataset in our paper.
+To reproduce results on text8 dataset, please run demo.sh file. It could automatically generate all results on the text8 dataset in our paper.
 
 > To run the code, please use python 2.7.
 
