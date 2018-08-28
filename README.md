@@ -15,6 +15,8 @@ Word embedding is a key component in many downstream applications in processing 
 
 To reproduce result on text8 dataset, please run demo.sh file. It could automatically generate all results on the text8 dataset in our paper.
 
+> To run the code, please use python 2.7.
+
 - ### Data
 
 We provide the testsets in four different languages: English, Czech, Danish and Dutch. Testsets in Czech, Danish and Dutch are translated into English by Google Translation API. They are in the testsets_in_different_languages folder.
