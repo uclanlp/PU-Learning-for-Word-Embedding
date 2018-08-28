@@ -35,4 +35,4 @@ year      = {2018},
 
 - ### Acknowledgments
 
- * Thanks for [Omer Levy's](https://levyomer.wordpress.com/) [hyperwords](https://bitbucket.org/omerlevy/hyperwords) code!
+ * Thanks for [Omer Levy's](https://levyomer.wordpress.com/) hyperwords [code](https://bitbucket.org/omerlevy/hyperwords)!
