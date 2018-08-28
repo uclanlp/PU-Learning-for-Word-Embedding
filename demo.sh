@@ -1,5 +1,4 @@
-source activate py27
-
+echo "please using python 2.7"
 if [ ! -e text8 ]; then
   if hash wget 2>/dev/null; then
     wget http://mattmahoney.net/dc/text8.zip
@@ -13,8 +12,8 @@ fi
 WindowSize=15
 MinimalCount=5
 CORPUS_NAME=text8
-CORPUS=~/build_corpus/en/1M_corpus
-#CORPUS=text8
+#CORPUS=~/build_corpus/en/1M_corpus
+CORPUS=text8
 PMIFolderName=${CORPUS_NAME}.win${WindowSize}.thr${MinimalCount}
 WhichMatrix=PPMI
 rhoForPMF=0.0625
