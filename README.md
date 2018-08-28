@@ -9,14 +9,7 @@ Chao Jiang, [Hsiang-Fu Yu](http://www.cs.utexas.edu/~rofuyu/), [Cho-Jui Hsieh](h
 
 - ### Abstract
 
-Language is increasingly being used to define rich visual recognition problems with supporting image collections sourced from the web. Structured prediction models are used in these tasks to take advantage of correlations between co-occurring labels and visual input but risk inadvertently encoding social biases found in web corpora. For example, in the following image, it is possible to predict  the *place* is the **kitchen**, because it is the common place for the *activity* **cooking**. However, in subfigure 4, the model predicts the agent as a woman even though it is a man, which is caused by the inappropriate correlations between the activity **cooking** and the **female** gender.
-
-| ![bias](img/bias_teaser.png)             |
-| ---------------------------------------- |
-| *Structure prediction can help the model to build the correlations between different parts. However it will also cause some bias problem.* |
-
-In our work, we study data and models associated with multilabel object classification (MLC) and visual semantic role labeling (vSRL). We find that (a) datasets for these tasks contain significant gender bias and (b) models trained on these datasets further amplify existing bias. For example, the activity **cooking** is over 33% more likely to involve females than males in a training set, and a trained model further amplifies the disparity to 68% at test time. We propose to inject corpus-level constraints for calibrating existing structured prediction models and design an algorithm based on Lagrangian relaxation for collective inference. Our method results in almost no performance loss for the underlying recognition task but decreases the magnitude of bias amplification by 47.5% and 40.5% for multilabel classification and visual semantic role labeling, respectively.
-
+Word embedding is a key component in many downstream applications in processing natural languages. Existing approaches often assume the existence of a large collection of text for learning effective word embedding. However, such a corpus may not be available for some low-resource languages. In this paper, we study how to effectively learn a word embedding model on a corpus with only a few million tokens. In such a situation, the co-occurrence matrix is sparse as the co-occurrences of many word pairs are unobserved. In contrast to existing approaches often only sample a few unobserved word pairs as negative samples, we argue that the zero entries in the co-occurrence matrix also provide valuable information. We then design a Positive-Unlabeled Learning (PU-Learning) approach to factorize the co-occurrence matrix and validate the proposed approaches in four different languages.
 
 - ### Source Code
 
