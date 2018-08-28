@@ -166,9 +166,9 @@ void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major, int implement
 	long m = row_major? A.size(): A[0].size();
 	long n = row_major? A[0].size(): A.size();
         
-        if(implement_glove_bias == 1) n = n - 2;//add by Chao
+        if(implement_glove_bias == 1) n = n - 2;
 
-        double *buf = MALLOC(double, m*n);//这用了吗？？？？？
+        double *buf = MALLOC(double, m*n);
 
 
 

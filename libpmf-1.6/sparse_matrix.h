@@ -119,9 +119,9 @@ class dmat_t{ // {{{
 				this->buf = MALLOC(val_type, rows*cols);
 				mem_alloc_by_me = true;
 			}
-			init_vec_set();//给过来首地址的指针，不管怎样，都要初始化？但是这里的size_t我一直看的不太懂
+			init_vec_set();
 		} // }}}
-		dmat_t(size_t rows, const dvec_t<val_type>& v): rows(rows), cols(v.size()) { // {{{等于这里面给进来一个v的作用，就是告诉每个行vector里面应该有多少个元素，这也是构造函数
+		dmat_t(size_t rows, const dvec_t<val_type>& v): rows(rows), cols(v.size()) { 
 			buf = MALLOC(val_type, rows*cols);
 			mem_alloc_by_me = true;
 			vec_set.resize(rows);
@@ -129,7 +129,7 @@ class dmat_t{ // {{{
 				vec_set[r] = vec_t(cols, &buf[r*cols]);
 			init_vec_set();
 		} // }}}
-		~dmat_t() {if(mem_alloc_by_me) free(buf);}//析构函数
+		~dmat_t() {if(mem_alloc_by_me) free(buf);}
 		dmat_t& operator=(const dmat_t<val_type> &other) { // {{{
 			if(this == &other)
 				return *this;
@@ -141,7 +141,7 @@ class dmat_t{ // {{{
 				mem_alloc_by_me = false;
 			} else { // deep copy
 				resize(other.rows, other.cols);
-				memcpy(buf, other.buf, sizeof(val_type)*rows*cols);//这个算是深复制
+				memcpy(buf, other.buf, sizeof(val_type)*rows*cols);
 				mem_alloc_by_me = true;
 			}
 			return *this;
@@ -150,7 +150,7 @@ class dmat_t{ // {{{
 		void resize(size_t rows_, const vec_t& v) { // {{{
 			size_t cols_ = v.size();
 			resize(rows_, cols_);
-		} // }}}这里面v进来，就是为了求一行有多少个元素的
+		} 
 		void resize(size_t rows_, size_t cols_) { // {{{
 			if(mem_alloc_by_me) {
 				if(rows_*cols_ != rows*cols)
@@ -300,42 +300,41 @@ bool ls_solve_chol(val_type *A, val_type *b, int n) { // {{{
 
 // Sparse matrix format CSC & CSR
 template<typename val_type>
-class smat_t{//sparse matrix的定义，重点！
+class smat_t{
 	private:
 		bool mem_alloc_by_me;
 		bool read_from_binary;
-		unsigned char* binary_buf;//这个是什么啊，以二进制存储的矩阵？
-		size_t binary_buf_len;//以二进制存储的矩阵的长度？
+		unsigned char* binary_buf;
+		size_t binary_buf_len;
 		const static int HeaderSize =
-			sizeof(size_t)+sizeof(size_t)+sizeof(size_t)+sizeof(size_t);//这个是什么呢？
+			sizeof(size_t)+sizeof(size_t)+sizeof(size_t)+sizeof(size_t);
 		void csr_to_csc();
 		void csc_to_csr();
 	public:
 		size_t rows, cols;
 		size_t nnz, max_row_nnz, max_col_nnz;
-		val_type *val, *val_t;//储存值的地方
-		val_type *weight, *weight_t;//储存weight的地方
-		size_t *col_ptr, *row_ptr;//行指针
-		unsigned *row_idx, *col_idx;//行和列的index
+		val_type *val, *val_t;
+		val_type *weight, *weight_t;
+		size_t *col_ptr, *row_ptr;
+		unsigned *row_idx, *col_idx;
 
 		// filetypes for loading smat_t
 		enum format_t {TXT=0, PETSc=1, BINARY=2, COMPRESSION=3};
 
 		// Constructor and Destructor
 		smat_t() : mem_alloc_by_me(false), read_from_binary(false), rows(0), cols(0), nnz(0){
-		val=val_t=NULL; col_ptr=row_ptr=NULL, row_idx=col_idx=NULL;}//纯空的构造函数
-		smat_t(const smat_t& m){*this = m; mem_alloc_by_me = false; read_from_binary = false;}//复制构造函数
-		~smat_t(){ clear_space();}//析构函数
+		val=val_t=NULL; col_ptr=row_ptr=NULL, row_idx=col_idx=NULL;}
+		smat_t(const smat_t& m){*this = m; mem_alloc_by_me = false; read_from_binary = false;}
+		~smat_t(){ clear_space();}
 
 		void clear_space();
 		smat_t transpose();
 		const smat_t transpose() const;
-             //后面的迭代器，每一个都是对vector和unsigned都可以做迭代
+             
 		void apply_permutation(const std::vector<unsigned> &row_perm, const std::vector<unsigned> &col_perm);
 		void apply_permutation(const unsigned *row_perm=NULL, const unsigned *col_perm=NULL);
 
 
-//相当于在smat_t类里面，藏着四个smat_subset_iterator_t类的迭代器，分别有不同的作用，行迭代器*2，列迭代器*2，每个迭代器还分别可以接受一个向量，或者给地址、size；问题是，这样的迭代器，是处理一行/列的，还是处理几行/几列的？
 
 		smat_subset_iterator_t<val_type> row_subset_it(const std::vector<unsigned> &subset);
 		smat_subset_iterator_t<val_type> row_subset_it(const unsigned *subset, int subset_size);
@@ -346,7 +345,7 @@ class smat_t{//sparse matrix的定义，重点！
 		smat_t row_subset(const std::vector<unsigned> &subset);
 		smat_t row_subset(const unsigned *subset, int subset_size);
 
-		size_t nnz_of_row(unsigned i) const {return (row_ptr[i+1]-row_ptr[i]);}//这个是返回这个行，有多少个nnz
+		size_t nnz_of_row(unsigned i) const {return (row_ptr[i+1]-row_ptr[i]);}
 
 
 		size_t nnz_of_col(unsigned i) const {return (col_ptr[i+1]-col_ptr[i]);}
@@ -373,7 +372,7 @@ class smat_t{//sparse matrix的定义，重点！
 			mem_alloc_by_me = true;
 			max_col_nnz = 0;
 			for(size_t c = 0; c < cols; c++)
-				max_col_nnz = std::max(max_col_nnz, nnz_of_col(c));//这是找出所有列里面，nnz数量最多的那一列
+				max_col_nnz = std::max(max_col_nnz, nnz_of_col(c));
 		}
 		val_type get_global_mean() const;
 		void remove_bias(val_type bias=0);
@@ -381,11 +380,6 @@ class smat_t{//sparse matrix的定义，重点！
 
 
 /*-------------- Iterators -------------------*/
-//从这里开始是各种迭代器
-
-//这两个entry_t有什么区别啊？？？
-//entry_t是个类模板，要产生对象
-//entry_iterator_t是个迭代器？可是他并没有显式的定义自己是一个迭代器啊
 
 template<typename val_type>
 class entry_t{
@@ -399,7 +393,7 @@ class entry_iterator_t {
 	public:
 		size_t nnz;
 		virtual entry_t<val_type> next() = 0;
-};//这里的这个next()是一个纯虚函数，这里面的每一个细节，都要注意到了，要不然就容易掉坑里
+};
 
 
 
@@ -421,13 +415,13 @@ class file_iterator_t: public entry_iterator_t<val_type>{
 
 // smat_t iterator
 template<typename val_type>
-class smat_iterator_t: public entry_iterator_t<val_type>{//这个应该是看sparse matrix里所有的nnz的
+class smat_iterator_t: public entry_iterator_t<val_type>{
 	public:
 		enum {ROWMAJOR, COLMAJOR};
 		// major: smat_iterator_t<val_type>::ROWMAJOR or smat_iterator_t<val_type>::COLMAJOR
 		smat_iterator_t(const smat_t<val_type>& M, int major = ROWMAJOR);
 		~smat_iterator_t() {}
-		entry_t<val_type> next();//返回一个三组数的tuple，x,y,val
+		entry_t<val_type> next();
 	private:
 		size_t nnz;
 		unsigned *col_idx;
@@ -440,11 +434,11 @@ class smat_iterator_t: public entry_iterator_t<val_type>{//这个应该是看spa
 
 // smat_t subset iterator
 template<typename val_type>
-class smat_subset_iterator_t: public entry_iterator_t<val_type>{//这个应该是看一个子矩阵里的nnz的
+class smat_subset_iterator_t: public entry_iterator_t<val_type>{
 	public:
 		enum {ROWMAJOR, COLMAJOR};
 		// major: smat_iterator_t<val_type>::ROWMAJOR or smat_iterator_t<val_type>::COLMAJOR
-		smat_subset_iterator_t(const smat_t<val_type>& M, const unsigned *subset, size_t size, bool remapping=false, int major = ROWMAJOR);//分别是矩阵，子矩阵，尺寸，是不是remapping，是不是ROWMAJOR
+		smat_subset_iterator_t(const smat_t<val_type>& M, const unsigned *subset, size_t size, bool remapping=false, int major = ROWMAJOR);
 		~smat_subset_iterator_t() {}
 		size_t get_nnz() {return nnz;}
 		size_t get_rows() {return major==ROWMAJOR? remapping? subset.size(): rows: rows;}
@@ -458,7 +452,7 @@ class smat_subset_iterator_t: public entry_iterator_t<val_type>{//这个应该�
 		val_type *weight_t;//FIXME
 		size_t rows, cols, cur_idx;
 		size_t cur_row;
-		std::vector<unsigned>subset;//这个subset是什么样子的？一个向量？还是一个矩阵？或者是把矩阵存成了一个向量？
+		std::vector<unsigned>subset;
 		int major;
 		bool remapping;
 };
@@ -504,9 +498,9 @@ void smat_t<val_type>::apply_permutation(const std::vector<unsigned> &row_perm, 
 template<typename val_type>
 void smat_t<val_type>::apply_permutation(const unsigned *row_perm, const unsigned *col_perm) {
 	if(row_perm!=NULL) {
-		for(size_t idx = 0; idx < nnz; idx++) row_idx[idx] = row_perm[row_idx[idx]];//这里要想实现这个操作，row_perm 应该是有多少行，就有多少个数，其中的nnz的位置有数，这个数是他的新的index
+		for(size_t idx = 0; idx < nnz; idx++) row_idx[idx] = row_perm[row_idx[idx]];
 		csc_to_csr();
-		csr_to_csc();//但是为什么排序完了，还要再这样转换一下呢
+		csr_to_csc();
 	}
 	if(col_perm!=NULL) {
 		for(size_t idx = 0; idx < nnz; idx++) col_idx[idx] = col_perm[col_idx[idx]];
@@ -515,21 +509,20 @@ void smat_t<val_type>::apply_permutation(const unsigned *row_perm, const unsigne
 	}
 }
 
-template<typename val_type>//返回row_subset_it,等于这个是返回一个迭代器，返回首地址和size，迭代器每+1，往后找一行，是这样吗？
-//这个也调用下面一个函数
+template<typename val_type>
 smat_subset_iterator_t<val_type> smat_t<val_type>::row_subset_it(const std::vector<unsigned> &subset) {
 	return row_subset_it(&subset[0], (int)subset.size());
 }
-//这里面用了很多subset，那subset是怎么定义的啊？？？
-template<typename val_type>//返回
+
+template<typename val_type>
 smat_subset_iterator_t<val_type> smat_t<val_type>::row_subset_it(const unsigned *subset, int subset_size) {
 	return smat_subset_iterator_t<val_type> (*this, subset, subset_size);
-}//看着好混乱
+}
 
 
 
 
-template<typename val_type>//这个调用下面一个函数
+template<typename val_type>
 smat_subset_iterator_t<val_type> smat_t<val_type>::col_subset_it(const std::vector<unsigned> &subset) {
 	return col_subset_it(&subset[0], (int)subset.size());
 }
@@ -552,7 +545,7 @@ smat_t<val_type> smat_t<val_type>::row_subset(const std::vector<unsigned> &subse
 }
 
 template<typename val_type>
-smat_t<val_type> smat_t<val_type>::row_subset(const unsigned *subset, int subset_size) {//难道这里subset_size是有多少行的意思？？？
+smat_t<val_type> smat_t<val_type>::row_subset(const unsigned *subset, int subset_size) {
 	smat_subset_iterator_t<val_type> it(*this, subset, subset_size);
 	smat_t<val_type> sub_smat;
 	sub_smat.load_from_iterator(subset_size, cols, it.get_nnz(), &it);
@@ -591,7 +584,7 @@ void smat_t<val_type>::remove_bias(val_type bias){
 
 
 
-template<typename val_type>//这是一个矩阵*一个向量
+template<typename val_type>
 void smat_t<val_type>::Xv(const val_type *v, val_type *Xv) {
 	for(size_t i = 0; i < rows; ++i) {
 		Xv[i] = 0;
@@ -609,13 +602,11 @@ void smat_t<val_type>::XTu(const val_type *u, val_type *XTu) {
 	}
 }
 
-//上面这两个函数，是矩阵*一个向量得到的结果
 
 
 
 
 
-//这个函数，比的是，谁在矩阵的左上角，a b  如果a在矩阵的左上角，那返回yes
 // Comparator for sorting rates into row/column comopression storage
 template<typename val_type>
 class SparseComp {
@@ -633,7 +624,6 @@ class SparseComp {
 
 
 
-//从一个迭代器里读取目标矩阵
 template<typename val_type>
 void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nnz, entry_iterator_t<val_type> *entry_it){
 	clear_space(); // clear any pre-allocated space in case of memory leak
@@ -665,7 +655,7 @@ void smat_t<val_type>::load_from_iterator(size_t _rows, size_t _cols, size_t _nn
 	}
 	// sort entries into row-majored ordering
 	sort(perm.begin(), perm.end(), SparseComp<val_type>(tmp_row_idx, tmp_col_idx, true));
-	// Generate CSR format//这里面的目的是为了把val_t按照sort的顺序排列？那为什么只动val_t呢？还是单纯为了补上val_t？那col_idx没法解释啊，已经变过了？
+	
 	for(size_t idx = 0; idx < _nnz; idx++) {
 		val_t[idx] = tmp_val[perm[idx]];
 		//weight_t[idx] = tmp_weight[perm[idx]];//FIXME
@@ -745,7 +735,6 @@ void smat_t<val_type>::save_PETSc_to_file(const char *filename){
 	fwrite(&nnz, sizeof(size_t), 1, fp);
 	fwrite(&nnz_row[0], sizeof(int32_t), rows, fp);
 	fwrite(&col_idx[0], sizeof(unsigned), nnz, fp);
-        //这上面和下面，为什么写入了两遍啊？这是个问题
 	// the following part == fwrite(val_t, sizeof(double), nnz, fp);
 	const size_t chunksize = 1024;
 	double buf[chunksize];
@@ -901,7 +890,7 @@ entry_t<val_type> file_iterator_t<val_type>::next() {
 		size_t i = strtol(head_ptr, &head_ptr, base10);
 		size_t j = strtol(head_ptr, &head_ptr, base10);
 		double v = strtod(head_ptr, &head_ptr);
-		return entry_t<val_type>(i-1, j-1, (val_type)v);//这里是拿回来的一个数组，x坐标，y坐标，数值
+		return entry_t<val_type>(i-1, j-1, (val_type)v);
 	} else {
 		fprintf(stderr, "Error: no more entry to iterate !!\n");
 		return entry_t<val_type>(0,0,0);
@@ -940,7 +929,7 @@ smat_iterator_t<val_type>::smat_iterator_t(const smat_t<val_type>& M, int major)
 	cur_idx = cur_row = 0;
 }
 
-template<typename val_type>//这个代码写的也非常精妙，每次返回下一个元素，如果一行的元素都给完了，就自动跳到下一行，取元素
+template<typename val_type>
 entry_t<val_type> smat_iterator_t<val_type>::next() {
 	while (cur_idx >= row_ptr[cur_row+1])
 		cur_row++;
@@ -964,7 +953,7 @@ smat_subset_iterator_t<val_type>::smat_subset_iterator_t(const smat_t<val_type>&
 	this->subset.resize(size);
 	nnz = 0;
 	for(size_t i = 0; i < size; i++) {
-		unsigned idx = subset[i];//所以给进来的subset，是一堆index，就是第多少个nnz？
+		unsigned idx = subset[i];
 		this->subset[i] = idx;
 		nnz += (major == ROWMAJOR)? M.nnz_of_row(idx): M.nnz_of_col(idx);
 	}
@@ -973,7 +962,7 @@ smat_subset_iterator_t<val_type>::smat_subset_iterator_t(const smat_t<val_type>&
 	cur_idx = row_ptr[this->subset[cur_row]];
 }
 
-template<typename val_type>//这个是返回一个新的迭代器，指向下一个位置的
+template<typename val_type>
 entry_t<val_type> smat_subset_iterator_t<val_type>::next() {
 	while (cur_idx >= row_ptr[subset[cur_row]+1]) {
 		cur_row++;
@@ -1029,9 +1018,7 @@ void smat_x_dmat(const smat_t<val_type> &X, const dmat_t<val_type> &W, dmat_t<va
    */
 
 
-//这里的定义还没有搞清楚？？？
 
-//所以这里和val_t的关系很大，还是要搞明白val_t 是怎么操作的
 template<typename val_type>
 void smat_x_dmat(val_type a, const smat_t<val_type> &X, const val_type* W, const size_t k, const val_type *H0, val_type *H) {
 	size_t m = X.rows;

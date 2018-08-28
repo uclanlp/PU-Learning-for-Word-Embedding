@@ -574,7 +574,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 					model.H[t][c] = 0;
 			}
 	} // }}}
-        //I don't use this part****************************************
 	
         //copy  &A, At, &testR, testRt
         // Create transpose view of A and R
@@ -600,7 +599,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         //m*n = m*k * (n*k)T
 	
         mat_t &W = model.W, &H = model.H;
-        //这里实际上是一个dense vector，在这里使用长度来初始化的，uu是一个竖条，vv是一个横行?这里我是不是理解错了
 	vec_t uu(R.rows), vv(R.cols);
 
 	if(param.warm_start) { // {{{
@@ -627,15 +625,15 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 	} else {
 		// initial value of the regularization term
 		// H is a zero matrix now.
-		for(size_t t = 0;t < k; t++)//k就是k
+		for(size_t t = 0;t < k; t++)
 			for(size_t c = 0; c < R.cols; c++)//R.cols是n
 				if(R.nnz_of_col(c) > 0)
-					H[t][c] = 0;//这里处理的矩阵的维度是k*n，先是每一行循环，然后每一列循环，只要这一列有一个0，这个点就置0
+					H[t][c] = 0;
 		for(size_t t = 0;t < k; t++)
 			for(size_t r = 0; r < R.rows; r++)
 				reg += W[t][r]*W[t][r]*R.nnz_of_row(r);
-	} // }}}//what does reg mean here
-        //H is k*n, W is k*r?
+	} 
+        
         if (param.glove_bias){
         for (int idx = 0; idx < model.W[0].size(); idx++){
                 model.W[param.k - 2][idx] = 1;
@@ -646,31 +644,27 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 	for(int oiter = 1; oiter <= maxiter; ++oiter) {//this is outer iteration
 		double gnorm = 0, initgnorm=0;
-		double rankfundec = 0;//what does this abbreviation mean?
-		double fundec_max = 0;//what does this abbreviation mean?
+		double rankfundec = 0;
+		double fundec_max = 0;
 		int early_stop = 0;
 		for(size_t tt=0; tt < k; tt++) {//here k is rank, do iteration by each rank
 			size_t t = tt;
 			if(early_stop >= 5) break;
 			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
-			vec_t &u = W[t], &v= H[t];//please, there update by feature
-                        //this part deals with formula 3.16
-			// Create Rhat = R + Wt Ht^T
+			vec_t &u = W[t], &v= H[t];
 			if (param.warm_start || oiter > 1) {//  || is or
 				UpdateRating(R, u, v, true);
 				UpdateRating(Rt, v, u, true);
 			}
 			Itime += omp_get_wtime() - start;
                         
-                        //I don't need this part, bucause I don't do predict###############
 			if (param.warm_start || oiter > 1) {
 				if(param.do_predict && testR.nnz!=0) {
 					UpdateRating(testR, u, v, true);
 					UpdateRating(testRt, v, u, true);
 				}
 			}
-                        //I don't need this part, bucause I don't do predict###############
                         if(param.verbose) {
 				for(size_t c = 0; c < R.cols; c++) reg -= v[c]*v[c]*R.nnz_of_col(c);
 				for(size_t r = 0; r < R.rows; r++) reg -= u[r]*u[r]*R.nnz_of_row(r);
@@ -712,7 +706,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 				// Update W[t]
 				start = omp_get_wtime();
-				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//why update W[t] needs At and Rt?
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
 
@@ -746,14 +740,12 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 						oiter, t+1, Htime+Wtime+Rtime, loss, loss_omega, loss_zero, obj, oldobj - obj, initgnorm, reg);
 				oldobj = obj;
 			}
-                        //I don't need this part################
 			if(param.do_predict && testR.nnz!=0) {
 				double test_loss = 0;
 				test_loss = UpdateRating(testR, u, v, false);
 				test_loss = UpdateRating(testRt, v, u, false);
 				printf("rmse %.10g", sqrt(test_loss/testR.nnz));
 			}
-                        //I don't need this part################
 			if(param.verbose) {
 				puts("");
 				fflush(stdout);
@@ -787,7 +779,7 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                         if(model_fpw) {
                                 if(do_shuffle)
                                         model.apply_permutation(row_perm, col_perm);
-                                model.save_embedding(model_fpw,model_fph, param.glove_bias);//FIXIT
+                                model.save_embedding(model_fpw,model_fph, param.glove_bias);
                                 fclose(model_fpw);
                                 fclose(model_fph);
                                 if(do_shuffle)
