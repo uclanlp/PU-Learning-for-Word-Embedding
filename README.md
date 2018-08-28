@@ -1,6 +1,6 @@
 
 ## [Learning Word Embeddings for Low-resource Languages by PU Learning](https://arxiv.org/abs/1805.03366) ##
-[Jieyu Zhao](http://jyzhao.net/), [Tianlu Wang](http://www.cs.virginia.edu/~tw8cb/), [Mark Yatskar](https://homes.cs.washington.edu/~my89/), [Vicente Ordonez](http://www.cs.virginia.edu/~vicente/), [Kai-Wei Chang](http://www.cs.virginia.edu/~kc2wc/). EMNLP 2017
+[Chao Jiang], [Hsiang-Fu Yu](http://www.cs.utexas.edu/~rofuyu/), [Cho-Jui Hsieh](http://www.stat.ucdavis.edu/~chohsieh/rf/), [Kai-Wei Chang](http://web.cs.ucla.edu/~kwchang/). NAACL 2018
 
 **Please nevigate the code through [this jupyter notebook](https://github.com/uclanlp/reducingbias/blob/master/src/fairCRF_gender_ratio.ipynb)**
 
