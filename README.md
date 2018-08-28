@@ -13,13 +13,11 @@ Word embedding is a key component in many downstream applications in processing 
 
 - ### Source Code
 
-We provide our calibration function in file "fairCRF_gender_ratio.ipynb". It is based on the Lagrangian Relaxation algorithm. You need to provide your own inference algorithm and also the algorithm you used to get the accuracy performance. The function also needs you to provide your own constraints. We give detailed description about the parameters in the [jupyter notebook](https://github.com/uclanlp/reducingbias/blob/master/src/fairCRF_gender_ratio.ipynb) and we also provide the running example for both vSRL and MLC tasks. 
-
-> To run the vSRL task, you need to have [caffe](http://caffe.berkeleyvision.org/installation.html) installed in your machine.  If you just want to run with the sampled data, be sure to download the .prototxt files from the data/imSitu/ folder and put them to the folder ("crf\_path" in our case) in the same level where caffe is installed. All the other files are also provided under data/imSitu/. Remember to modify all the path in the config.ini file with absolute path.
+To reproduce result on text8 dataset, please run demo.sh file. It could automatically generate all results on the text8 dataset in our paper.
 
 - ### Data
 
-We provide all the potential scores for MS-COCO dataset in data/COCO folder.  Also there is sampled potentials for imSitu dataset in data/imSitu folder. For complete imSitu potentials, download at [here](https://s3.amazonaws.com/MY89_Transfer/crf_only.tar).
+We provide the testsets in four different languages: English, Czech, Danish and Dutch. Testsets in Czech, Danish and Dutch are translated into English by Google Translation API. They are in the testsets_in_different_languages folder.
 
 - ### Reference
   Please cite
