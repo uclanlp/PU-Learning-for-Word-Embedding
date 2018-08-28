@@ -33,9 +33,9 @@ We provide all the potential scores for MS-COCO dataset in data/COCO folder.  Al
 
  ```
 @inproceedings{JYHC18,
-               author = {Chao Jiang and Hsiang-Fu Yu and Cho-Jui Hsieh and Kai-Wei Chang},
-               title = {Learning Word Embeddings for Low-resource Languages by PU Learning}, 
-               booktitle = {NAACL}, 
-               year = {2018},
+author    = {Chao Jiang and Hsiang-Fu Yu and Cho-Jui Hsieh and Kai-Wei Chang},
+title     = {Learning Word Embeddings for Low-resource Languages by PU Learning}, 
+booktitle = {NAACL}, 
+year      = {2018},
               }
  ```
