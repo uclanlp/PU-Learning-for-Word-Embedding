@@ -30,5 +30,9 @@ author    = {Chao Jiang and Hsiang-Fu Yu and Cho-Jui Hsieh and Kai-Wei Chang},
 title     = {Learning Word Embeddings for Low-resource Languages by PU Learning}, 
 booktitle = {NAACL}, 
 year      = {2018},
-              }
+}
  ```
+
+- ### Acknowledgments
+
+ * Thanks for [Omer Levy's](https://levyomer.wordpress.com/) [hyperwords](https://bitbucket.org/omerlevy/hyperwords) code!
