@@ -18,21 +18,16 @@ pmf_model_t::pmf_model_t(size_t rows_, size_t cols_, size_t k_, major_t major_ty
 void pmf_model_t::mat_rand_init(mat_t &X, size_t m, size_t n, long seed) {
 	val_type scale = 1./sqrt(k);
 	rng_t rng(seed);
-	//srand48(seed);
 	if(major_type == COLMAJOR) {
 		X.resize(n, vec_t(m));
 		for(size_t i = 0; i < m; i++)
 			for(size_t j = 0; j < n; j++)
 				X[j][i] = (val_type) rng.uniform((val_type)0.0, scale);
-		//		X[j][i] = (val_type) (scale*(2*drand48()-1.0));
-	    //		X[j][i] = (val_type) (scale*(drand48()));
-	} else { // major_type == ROWMAJOR
+	} else { 
 		X.resize(m, vec_t(n));
 		for(size_t i = 0; i < m; i++)
 			for(size_t j = 0; j < n; j++)
 				X[i][j] = (val_type) rng.uniform((val_type)0.0, scale);
-	//			X[i][j] = (val_type) (scale*(2*drand48()-1.0));
-	//          X[i][j] = (val_type) (scale*(drand48()));
 	}
 }
 
@@ -47,7 +42,7 @@ val_type pmf_model_t::predict_entry(size_t i, size_t j) const {
 		if(major_type == COLMAJOR) {
 			for(size_t t = 0; t < k; t++)
 				value += W[t][i] * H[t][j];
-		} else { // major_type == ROWMAJOR
+		} else { 
 			const vec_t &Wi = W[i], &Hj = H[j];
 			for(size_t t = 0; t < k; t++)
 				value += Wi[t] * Hj[t];
@@ -78,7 +73,7 @@ void pmf_model_t::apply_permutation(const unsigned *row_perm, const unsigned *co
 					Ht[c] = v[col_perm[c]];
 			}
 		}
-	} else { // major_type == ROWMAJOR
+	} else { 
 		if(row_perm != NULL) {
 			mat_t buf(rows, vec_t(k));
 			for(size_t r = 0; r < rows; r++)
@@ -107,12 +102,10 @@ void pmf_model_t::save(FILE *fp){
 	double buf = (double)global_bias;
 	fwrite(&buf, sizeof(double), 1, fp);
 }
-void pmf_model_t::save_embedding(FILE *fpw, FILE *fph, int implement_glove_bias){//FIXIT
+void pmf_model_t::save_embedding(FILE *fpw, FILE *fph, int implement_glove_bias){
     printf("???");
-    save_wordembedding(W, fpw, major_type==ROWMAJOR, implement_glove_bias);//FIXIT
-    save_wordembedding(H, fph, major_type==ROWMAJOR, implement_glove_bias);//FIXIT
-    // Need to save the embedding in ascii file an compare
-    // Check how save_mat_t is implemented
+    save_wordembedding(W, fpw, major_type==ROWMAJOR, implement_glove_bias);
+    save_wordembedding(H, fph, major_type==ROWMAJOR, implement_glove_bias);
 
 }
 
@@ -129,9 +122,6 @@ void pmf_model_t::load(FILE *fp, major_t major_type_){
 	k = (major_type==ROWMAJOR)? W[0].size() : W.size();
 }
 
-// Save a mat_t A to a file in row_major order.
-// row_major = true: A is stored in row_major order,
-// row_major = false: A is stored in col_major order.
 void save_mat_t(const mat_t &A, FILE *fp, bool row_major){//{{{
 	if (fp == NULL)
 		fprintf(stderr, "output stream is not valid.\n");
@@ -177,7 +167,7 @@ void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major, int implement
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6lf ", A[i][j]);//FIXIT
+                fprintf(fp, "%.6lf ", A[i][j]);
             fprintf(fp, "\n");
         }
     } else {
@@ -185,7 +175,7 @@ void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major, int implement
 		for(size_t i = 0; i < m; ++i)
         {
 			for(size_t j = 0; j < n; ++j)
-                fprintf(fp, "%.6lf ", A[j][i]);//FIXIT
+                fprintf(fp, "%.6lf ", A[j][i]);
             fprintf(fp, "\n");
         }
 
@@ -195,9 +185,6 @@ void save_wordembedding(const mat_t &A,  FILE *fp, bool row_major, int implement
 
 
 
-// Load a matrix from a file and return a mat_t matrix
-// row_major = true: the returned A is stored in row_major order,
-// row_major = false: the returened A  is stored in col_major order.
 void load_mat_t(FILE *fp, mat_t &A, bool row_major){//{{{
 	if (fp == NULL)
 		fprintf(stderr, "Error: null input stream.\n");
@@ -210,14 +197,12 @@ void load_mat_t(FILE *fp, mat_t &A, bool row_major){//{{{
 	if(fread(&buf[0], sizeof(val_type), m*n, fp) != m*n)
 		fprintf(stderr, "Error: wrong input stream.\n");
 	if (row_major) {
-		//A = mat_t(m, vec_t(n));
 		A.resize(m, vec_t(n));
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
 			for(size_t j = 0; j < n; ++j)
 				A[i][j] = buf[idx++];
 	} else {
-		//A = mat_t(n, vec_t(m));
 		A.resize(n, vec_t(m));
 		size_t idx = 0;
 		for(size_t i = 0; i < m; ++i)
@@ -228,7 +213,6 @@ void load_mat_t(FILE *fp, mat_t &A, bool row_major){//{{{
 }//}}}
 
 
-// load utility for CCS RCS
 void pmf_read_data(const char* srcdir, smat_t &training_set, smat_t &test_set, smat_t::format_t fmt) { //{{{
 	size_t m, n, nnz;
 	char filename[1024], buf[1024], suffix[12];
@@ -245,7 +229,7 @@ void pmf_read_data(const char* srcdir, smat_t &training_set, smat_t &test_set, s
 		return;
 	}
 	if(fmt == smat_t::TXT)
-		suffix[0] = 0; //sprintf(suffix, "");
+		suffix[0] = 0; 
 	else if(fmt == smat_t::PETSc)
 		sprintf(suffix, ".petsc");
 	else
@@ -262,7 +246,6 @@ void pmf_read_data(const char* srcdir, smat_t &training_set, smat_t &test_set, s
 	return ;
 }//}}}
 
-// load utility for blocks_t
 void pmf_read_data(const char* srcdir, blocks_t &training_set, blocks_t &test_set, smat_t::format_t fmt) { //{{{
 	size_t m, n, nnz;
 	char filename[1024], buf[1024], suffix[12];
@@ -278,9 +261,9 @@ void pmf_read_data(const char* srcdir, blocks_t &training_set, blocks_t &test_se
 		fprintf(stderr, "Error: corrupted meta in line 2 of %s\n", srcdir);
 		return;
 	}
-	suffix[0] = 0; // TXT
+	suffix[0] = 0; 
 	if(fmt == smat_t::TXT)
-		suffix[0] = 0; //sprintf(suffix, "");
+		suffix[0] = 0; 
 	else if(fmt == smat_t::PETSc)
 		sprintf(suffix, ".petsc");
 	else
@@ -288,19 +271,16 @@ void pmf_read_data(const char* srcdir, blocks_t &training_set, blocks_t &test_se
 
 	sprintf(filename,"%s/%s%s", srcdir, buf, suffix);
 	training_set.load(m, n, nnz, filename, fmt);
-	//training_set.load(m, n, nnz, filename);
 
 	if(fscanf(fp, "%lu %s", &nnz, buf) != EOF){
 		sprintf(filename,"%s/%s%s", srcdir, buf, suffix);
 		test_set.load(m, n, nnz, filename, fmt);
-		//test_set.load(m, n, nnz, filename);
 	}
 	fclose(fp);
 	return ;
 }//}}}
 
 
-// Ranking Evaluation Utlility Function
 
 struct decreasing_comp_t{
 	const double *pred_val;
@@ -316,9 +296,6 @@ void sort_idx_by_val(const double *pred_val, size_t len, size_t *idx, size_t top
 inline double gain(double rel) { return exp2(rel)-1;}
 inline double discount(int l) { return 1.0/log2(l+2);}
 
-// input: idx is an sorted index array of length=len
-// output: dcg is the array of length=topk with accumuated dcg information
-// return: dcg@topk
 double compute_dcg(const double *true_rel, size_t *sorted_idx, size_t len, int topk, double *dcg) {
 	int levels = topk>len? len : topk;
 	double cur_dcg = 0.0;

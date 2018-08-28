@@ -8,28 +8,22 @@ inline val_type RankOneUpdate(const smat_t &R, const int j, const vec_t &u, cons
 	if(R.col_ptr[j+1]==R.col_ptr[j]) return 0;
 	for(size_t idx=R.col_ptr[j]; idx < R.col_ptr[j+1]; idx++) {
 		size_t i = R.row_idx[idx];
-		g += R.weight[idx] * u[i]*R.val[idx]; //FIXIT
-		h += R.weight[idx] * u[i]*u[i]; //FIXIT
+		g += R.weight[idx] * u[i]*R.val[idx]; 
+		h += R.weight[idx] * u[i]*u[i]; 
 	}
 	val_type newvj = g/h, tmp = 0, delta = 0, fundec = 0;
 	if((do_nmf>0) & (newvj<0)) {
 		newvj = 0;
-		delta = vj; // old - new
+		delta = vj; 
 		fundec = -2*g*vj + h*vj*vj;
 	} else {
 		delta = vj - newvj;
 		fundec = h*delta*delta;
 	}
-	//val_type delta = vj - newvj;
-	//val_type fundec = h*delta*delta;
-	//val_type lossdec = fundec - lambda*delta*(vj+newvj);
-	//val_type gnorm = (g-h*vj)*(g-h*vj);
 	*redvar += fundec;
-	//*redvar += lossdec;
 	return newvj;
 } // }}}
 
-//I use this function a lot of times, need to pay a lot of attention
 inline double UpdateRating(smat_t &R, const vec_t &Wt2, const vec_t &Ht2) { // {{{
 	double loss=0;
 #pragma omp parallel for schedule(kind) reduction(+:loss)
@@ -44,7 +38,6 @@ inline double UpdateRating(smat_t &R, const vec_t &Wt2, const vec_t &Ht2) { // {
 		}
 	return loss;
 } // }}}
-// To be improved!
 static inline double UpdateRating(smat_t &R, const vec_t &Wt, const vec_t &Ht, bool add) { // {{{
 	double loss=0;
 	if(add) {
@@ -55,7 +48,6 @@ static inline double UpdateRating(smat_t &R, const vec_t &Wt, const vec_t &Ht, b
 			for(size_t idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
 				R.val[idx] +=  Wt[R.row_idx[idx]]*Htc;
 				loss_inner += R.val[idx]*R.val[idx];
-				//loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
 			}
 			loss += loss_inner;
 		}
@@ -68,7 +60,6 @@ static inline double UpdateRating(smat_t &R, const vec_t &Wt, const vec_t &Ht, b
 			for(size_t idx=R.col_ptr[c]; idx < R.col_ptr[c+1]; ++idx){
 				R.val[idx] -=  Wt[R.row_idx[idx]]*Htc;
 				loss_inner += R.val[idx]*R.val[idx];
-				//loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
 			}
 			loss += loss_inner;
 		}
@@ -76,7 +67,6 @@ static inline double UpdateRating(smat_t &R, const vec_t &Wt, const vec_t &Ht, b
 	}
 }// }}}
 
-// Cyclic Coordinate Descent for Matrix Factorization
 void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model){ // {{{
 	size_t k = param.k;
 	int maxiter = param.maxiter;
@@ -107,7 +97,6 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 			}
 	} // }}}
 
-	// Create transpose view of R
 	smat_t &R = training_set, Rt = R.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
 	mat_t &W = model.W, &H = model.H;
@@ -131,8 +120,6 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 			}
 		}
 	} else {
-		// initial value of the regularization term
-		// H is a zero matrix now.
 		for(size_t t = 0;t < k; t++)
 			for(size_t c = 0; c < R.cols; c++)
 				if(R.nnz_of_col(c) > 0)
@@ -150,11 +137,9 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 		for(size_t tt=0; tt < k; tt++) {
 			size_t t = tt;
 			if(early_stop >= 5) break;
-			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
 			vec_t &u = W[t], &v= H[t];
 
-			// Create Rhat = R + Wt Ht^T
 			if (param.warm_start || oiter > 1) {
 				UpdateRating(R, u, v, true);
 				UpdateRating(Rt, v, u, true);
@@ -173,13 +158,11 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 			gnorm = 0, initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
-			//	if(oiter > 1) maxit *= 2;
 			for(int iter = 1; iter <= maxit; ++iter){
 				
                                 
                                 
                                 if (t != param.k - 1){
-                                // Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
@@ -196,7 +179,6 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
                                 
                                 
                                 if (t != param.k - 2){
-				// Update W[t]
 				start = omp_get_wtime();
 #pragma omp parallel for schedule(kind) shared(u,v) reduction(+:innerfundec_cur)
 				for(long c = 0; c < Rt.cols; ++c) {
@@ -217,13 +199,11 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 				}
 				rankfundec += innerfundec_cur;
 				innerfundec_max = std::max(innerfundec_max, innerfundec_cur);
-				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
 				Wtime += omp_get_wtime() - start;
 			}
 
-			// Update R and Rt
 			start = omp_get_wtime();
 			loss = UpdateRating(R, u, v, false);
 			loss = UpdateRating(Rt, v, u, false);
@@ -251,7 +231,6 @@ void ccdr1(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_m
 	omp_set_num_threads(num_threads_old);
 } // }}}
 
-// Cyclic Coordinate Descent for Matrix Factorization Speedup Version
 void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model){ // {{{
 	long k = param.k;
 	int maxiter = param.maxiter;
@@ -282,7 +261,6 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 			}
 	} // }}}
 
-	// Create transpose view of R
 	smat_t &R = training_set, Rt = R.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
 	mat_t &W = model.W, &H = model.H;
@@ -307,8 +285,6 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 			}
 		}
 	} else {
-		// initial value of the regularization term
-		// H is a zero matrix now.
 		for(size_t t = 0;t < k; t++)
 			for(size_t c = 0; c < R.cols; c++)
 				if(R.nnz_of_col(c) > 0)
@@ -318,8 +294,8 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 				reg += W[t][r]*W[t][r]*R.nnz_of_row(r);
 	}
 
-	size_t adaptive_k = 1;  // upper_bound = k
-	val_type adaptive_lambda = lambda*log2((double)k); //*k/adaptive_k; // lower_bound = lambda
+	size_t adaptive_k = 1;  
+	val_type adaptive_lambda = lambda*log2((double)k); 
 
 	for(int oiter = 1; oiter <= maxiter; ++oiter) {
 		double gnorm = 0, initgnorm=0;
@@ -327,15 +303,12 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 		double fundec_max = 0;
 		int early_stop = 0;
 		size_t tt = 0;
-		//for(size_t tt=0; tt < k; tt++) {
 		while(tt < adaptive_k) {
 			size_t t = tt; tt++;
 			if(early_stop >= 5) break;
-			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
 			vec_t &u = W[t], &v= H[t];
 
-			// Create Rhat = R + Wt Ht^T
 			if (param.warm_start || oiter > 1) {
 				UpdateRating(R, u, v, true);
 				UpdateRating(Rt, v, u, true);
@@ -354,9 +327,7 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 			gnorm = 0, initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
-			//	if(oiter > 1) maxit *= 2;
 			for(int iter = 1; iter <= maxit; ++iter){
-				// Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
@@ -383,13 +354,11 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 				}
 				rankfundec += innerfundec_cur;
 				innerfundec_max = std::max(innerfundec_max, innerfundec_cur);
-				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
 				Wtime += omp_get_wtime() - start;
 			}
 
-			// Update R and Rt
 			start = omp_get_wtime();
 			loss = UpdateRating(R, u, v, false);
 			loss = UpdateRating(Rt, v, u, false);
@@ -416,7 +385,6 @@ void ccdr1_speedup(smat_t &training_set, smat_t &test_set, pmf_parameter_t &para
 
 		if(tt == adaptive_k) {
 			adaptive_k = std::min(2*adaptive_k, (size_t)k);
-			//adaptive_lambda = std::max(lambda*k/adaptive_k, lambda);
 			adaptive_lambda = std::max(adaptive_lambda-lambda, lambda);
 			if(param.verbose>1)
 				printf("---------> adaptive (k,lambda) = (%ld, %g)\n", adaptive_k, adaptive_lambda);
@@ -442,13 +410,11 @@ static inline val_type dot(const vec_t& u, const vec_t& v) { // {{{
 		ret += u[t]*v[t];
 	return ret;
 } // }}}
-//I also use this function, but it will not affects the result.
 static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_model_t &model, double *loss_omega=NULL, double *loss_zero=NULL) { // {{{
 	double omega_part = 0.0;
 #pragma omp parallel for schedule(static) reduction(+:omega_part)
 	for(long idx = 0; idx < R.nnz; idx++) {
 		val_type tmp = R.val[idx];
-		//loss_inner += (R.with_weights? R.weight[idx]: 1.0)*R.val[idx]*R.val[idx];
 		omega_part += R.weight[idx]*tmp*tmp;
 	}
 
@@ -473,10 +439,8 @@ static double compute_pu_loss(smat_t &A, smat_t &R, pmf_parameter_t &param, pmf_
 	return zero_part+omega_part;
 } // }}}
 
-//Here Hsiang-fu make modifications, pay special attention!
 void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param, mat_t &W, mat_t &H, vec_t &u, vec_t &v, vec_t &uTWHT, double &innerfundec_cur) {  // {{{
         
-	// could be replaced by BLAS operations
 	val_type uTu = dot(u, u); 
 #pragma omp parallel for schedule(kind) shared(uTWHT) 
 	for(long c=0; c < A.cols; c++)
@@ -498,28 +462,24 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 
 		val_type uRc = 0, uTu_omegac = 0, uAc = 0;
 
-                //##########################
-                if (param.glove_weight){//boundary! if I use glove weight
+                if (param.glove_weight){
 
-                       // printf("in pu_rank_one_update, now have weight\n");
         	for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
 			size_t r = R.row_idx[idx];
-			uRc += (R.weight[idx]-param.rho) * u[r]*R.val[idx];//FIXIT
-			uAc += u[r]*A.val[idx];//FIXIT
-                        uTu_omegac += (R.weight[idx]-param.rho) * u[r]*u[r];//FIXIT
+			uRc += (R.weight[idx]-param.rho) * u[r]*R.val[idx];
+			uAc += u[r]*A.val[idx];
+                        uTu_omegac += (R.weight[idx]-param.rho) * u[r]*u[r];
 		}
 
-		double neg_fp = (uRc)+param.rho*(uAc-uTWHT[c]);  //FIXME
-		double fpp = (uTu_omegac + param.rho*uTu + param.lambda*R.nnz_of_col(c));//FIXME
+		double neg_fp = (uRc)+param.rho*(uAc-uTWHT[c]);  
+		double fpp = (uTu_omegac + param.rho*uTu + param.lambda*R.nnz_of_col(c));
 		double vc_new = neg_fp/fpp;
 		fun_dec += fpp*(vc_new-v[c])*(vc_new-v[c]);
 		v[c] = vc_new;
                 
-                }else//boundary, if I don't use glove weight
+                }else
                 
                 {
-                        //printf("in pu_rank_one_update, now don't have weight\n");
-                //###########################
 		for(size_t idx = R.col_ptr[c] ; idx<R.col_ptr[c+1] ; idx++ ) {
 			size_t r = R.row_idx[idx];
 			uRc += u[r]*R.val[idx];
@@ -534,14 +494,11 @@ void pu_rank_one_update(int cur_t, smat_t &A, smat_t &R, pmf_parameter_t &param,
 		v[c] = vc_new;
 
                 }
-              //###########################
 	}
 	innerfundec_cur += fun_dec;
 } // }}}
 
-// Cyclic Coordinate Descent for Matrix Factorization with uniform rho
 
-//this is the main functionn for ccdr1_pu, look it carefully
 
 
 void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pmf_model_t &model, int do_shuffle, std::vector<unsigned> row_perm, std::vector<unsigned> col_perm, std::vector<unsigned> inverse_row_perm, std::vector<unsigned> inverse_col_perm, const char *model_file_name){ // {{{
@@ -557,7 +514,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 
 	omp_set_num_threads(param.threads);
 
-        //I don't use this part****************************************
 	if(param.remove_bias) { // {{{
 		double bias = training_set.get_global_mean();
 		training_set.remove_bias(bias);
@@ -575,28 +531,22 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			}
 	} // }}}
 	
-        //copy  &A, At, &testR, testRt
-        // Create transpose view of A and R
 	smat_t &A = training_set, At = A.transpose();
 	smat_t &testR = test_set, testRt = testR.transpose();
-	smat_iterator_t<val_type> it(A);//here I announce a iterator, the return of next() is a tuples contains (x, y, val)
+	smat_iterator_t<val_type> it(A);
 
-        //here, announce R, R just copy A's information, and I modified the code to copy weight information from A to R
  
 	smat_t R; R.load_from_iterator(A.rows, A.cols, A.nnz, &it); 
         
 	if (param.glove_weight){ 
         for(size_t idx=0; idx < A.nnz; idx++){
-        R.weight[idx] = A.weight[idx];//(val[idx]>x_max)?1:pow(val[idx]/x_max, alpha);
-        R.weight_t[idx] = A.weight_t[idx];//(val_t[idx]>x_max)?1:pow(val_t[idx]/x_max, alpha);
+        R.weight[idx] = A.weight[idx];
+        R.weight_t[idx] = A.weight_t[idx];
         }  
 	}
         
         smat_t Rt = R.transpose();
 
-        //here I announce two dense matrix, from the deminsion aspect:
-        //A = W* H  
-        //m*n = m*k * (n*k)T
 	
         mat_t &W = model.W, &H = model.H;
 	vec_t uu(R.rows), vv(R.cols);
@@ -623,10 +573,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 			}
 		}
 	} else {
-		// initial value of the regularization term
-		// H is a zero matrix now.
 		for(size_t t = 0;t < k; t++)
-			for(size_t c = 0; c < R.cols; c++)//R.cols是n
+			for(size_t c = 0; c < R.cols; c++)
 				if(R.nnz_of_col(c) > 0)
 					H[t][c] = 0;
 		for(size_t t = 0;t < k; t++)
@@ -642,15 +590,14 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
         }
         }
 
-	for(int oiter = 1; oiter <= maxiter; ++oiter) {//this is outer iteration
+	for(int oiter = 1; oiter <= maxiter; ++oiter) {
 		double gnorm = 0, initgnorm=0;
 		double rankfundec = 0;
 		double fundec_max = 0;
 		int early_stop = 0;
-		for(size_t tt=0; tt < k; tt++) {//here k is rank, do iteration by each rank
+		for(size_t tt=0; tt < k; tt++) {
 			size_t t = tt;
 			if(early_stop >= 5) break;
-			//if(oiter>1) { t = rand()%k; }
 			start = omp_get_wtime();
 			vec_t &u = W[t], &v= H[t];
 			if (param.warm_start || oiter > 1) {//  || is or
@@ -670,15 +617,12 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				for(size_t r = 0; r < R.rows; r++) reg -= u[r]*u[r]*R.nnz_of_row(r);
 			}
 
-                        //pu_rank_one_update if formula 3.10
 			gnorm = 0, initgnorm = 0;
 			double innerfundec_cur = 0, innerfundec_max = 0;
 			int maxit = inneriter;
-			//	if(oiter > 1) maxit *= 2;
-			for(int iter = 1; iter <= maxit; ++iter){//there decisec how many inner iterations
+			for(int iter = 1; iter <= maxit; ++iter){
                             if(param.glove_bias){
                                 if (t != param.k -1){
-				// Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
@@ -688,15 +632,13 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                 }
 
                                 if (t != param.k -2){
-				// Update W[t]
 				start = omp_get_wtime();
-				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);//
+				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);
 				num_updates += Rt.cols;
 				Wtime += omp_get_wtime() - start;
                                 }
                             }
                             else{
-				// Update H[t]
 				start = omp_get_wtime();
 				gnorm = 0;
 				innerfundec_cur = 0;
@@ -704,7 +646,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				num_updates += R.cols;
 				Htime += omp_get_wtime() - start;
 
-				// Update W[t]
 				start = omp_get_wtime();
 				pu_rank_one_update(t, At, Rt, param, H, W, v, u, uu, innerfundec_cur);
 				num_updates += Rt.cols;
@@ -718,12 +659,10 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				}
 				rankfundec += innerfundec_cur;
 				innerfundec_max = std::max(innerfundec_max, innerfundec_cur);
-				// the fundec of the first inner iter of the first rank of the first outer iteration could be too large!!
 				if(!(oiter==1 && t == 0 && iter==1))
 					fundec_max = std::max(fundec_max, innerfundec_cur);
-			}//the end of inner iteration
+			}
                         
-			// Update R and Rt
 			start = omp_get_wtime();
 			UpdateRating(R, u, v, false);
 			UpdateRating(Rt, v, u, false);
@@ -750,12 +689,12 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
 				puts("");
 				fflush(stdout);
 			}
-		}//the end of updating each rank
+		}
 
 
 	        if(param.save_each){
                         FILE *model_fpw = NULL;	
-                        FILE *model_fph = NULL;//FIXIT
+                        FILE *model_fph = NULL;
 
                         float rho = param.rho;
                         float lambda = param.lambda;
@@ -768,7 +707,6 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                         fprintf(stderr,"Error: can't open model file %s\n", model_file_name);
                                         exit(1);
                                 }	
-                               // sprintf(matrixname, "%s-l%f-r%f-oiter%d.H", model_file_name, lambda, rho, oiter);
                 		sprintf(matrixname, "%s.iter%d.contexts", model_file_name, oiter);
                                 model_fph = fopen(matrixname, "w");
                                 if(model_fph == NULL) {
@@ -785,8 +723,8 @@ void ccdr1_pu(smat_t &training_set, smat_t &test_set, pmf_parameter_t &param, pm
                                 if(do_shuffle)
                                         model.apply_permutation(inverse_row_perm, inverse_col_perm);
                         }
-                }//end of save_each partition
-	}//end of outer iteration
+                }
+	}
 	omp_set_num_threads(num_threads_old);
 } // }}}
 

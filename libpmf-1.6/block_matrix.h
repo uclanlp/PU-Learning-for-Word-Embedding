@@ -8,7 +8,6 @@ template<typename val_type> class blocks_t;
 
 #define MALLOC(type, size) (type*)malloc(sizeof(type)*(size))
 
-// a block of rate set for PSGD
 template<typename val_type>
 class blocks_t {
 	public:
@@ -41,11 +40,9 @@ class blocks_t {
 		std::vector<unsigned> nnz_row, nnz_col;
 		bool rowmajored;
 
-		// Constructors
 		blocks_t():rows(0),cols(0),nnz(0),B(0),Bm(0),Bn(0){}
 
 
-		// Access methods
 		void set_blocks(int _B, bool rowmajor=true){ // {{{
 			B = _B;
 			Bm = rows/B+((rows%B)?1:0); // block's row size
@@ -96,7 +93,6 @@ class blocks_t {
 		size_t nnz_of_row(unsigned i) const {return nnz_row[i];}
 		size_t nnz_of_col(unsigned i) const {return nnz_col[i];}
 
-		// IO methods
 		void load_from_iterator(long _rows, long _cols, long _nnz, entry_iterator_t<val_type>* entry_it){  // {{{
 			rows =_rows,cols=_cols,nnz=_nnz;
 			allrates.reserve(nnz);
@@ -123,7 +119,6 @@ class blocks_t {
 		} // }}}
 		void load_from_PETSc(const char *filename);
 
-		// used for MPI verions
 		void from_mpi(long _rows, long _cols, long _nnz){ // {{{
 			rows =_rows,cols=_cols,nnz=_nnz;
 			block_ptr.resize(B+1);
@@ -194,13 +189,11 @@ void blocks_t<val_type>::load_from_PETSc(const char *filename) { // {{{
 	} else {
 		fprintf(stderr, "Error: wrong PETSc format for %s\n", filename);
 	}
-	// Allocation of memory
 	allrates.resize(nnz);
 	nnz_row.clear(); nnz_row.resize(rows);
 	nnz_col.clear(); nnz_col.resize(cols);
 
 
-	// load blocks_t from the binary PETSc format
 	{
 		{ // read row_idx {{{
 			std::vector<int32_t> nnz_row(rows);
@@ -252,24 +245,6 @@ void blocks_t<val_type>::load_from_PETSc(const char *filename) { // {{{
 } // }}}
 
 
-// blocks_t iterator
-/*
-template<typename val_type>
-class blocks_iterator_t: public entry_iterator_t<val_type>{
-	public:
-		enum {ROWMAJOR, COLMAJOR};
-		blocks_iterator_t(const blocks_t<val_type>& M, int major = ROWMAJOR);
-		~blocks_iterator_t() {}
-		entry_t<val_type> next();
-	private:
-		size_t nnz;
-		unsigned *col_idx;
-		size_t *row_ptr;
-		val_type *val_t;
-		size_t rows, cols, cur_idx;
-		size_t cur_row;
-};
-*/
 
 #undef blocks_t
 

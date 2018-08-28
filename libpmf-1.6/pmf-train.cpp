@@ -51,9 +51,9 @@ void exit_with_help()
 	exit(1);
 }
 
-pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *count_file_name, char* output_folder_name, char *model_file_name)//FIXME
+pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name, char *count_file_name, char* output_folder_name, char *model_file_name)
 {
-	pmf_parameter_t param;   // default values have been set by the constructor
+	pmf_parameter_t param;   
 	int i;
 
 	// parse options
@@ -169,20 +169,18 @@ pmf_parameter_t parse_command_line(int argc, char **argv, char *input_file_name,
 
 	if (param.do_predict != 0 && param.verbose == 0)
 		param.verbose = 1;
-        //printf("glove bias term is %d\n", param.glove_bias);
         if (param.glove_bias != 0) {param.k += 2;printf("need glove bias, k is %d\n", param.k);}
 
-	// determine filenames
 	if(i>=argc)
 		exit_with_help();
 
 	strcpy(input_file_name, argv[i]);
         
-        i++;//FIXME
-	strcpy(count_file_name, argv[i]);//FIXME
+        i++;
+	strcpy(count_file_name, argv[i]);
 	
-        i++;//FIXME
-	strcpy(output_folder_name, argv[i]);//FIXME
+        i++;
+	strcpy(output_folder_name, argv[i]);
 	
         if(i<argc-1)
 		strcpy(model_file_name,argv[i+1]);
@@ -220,7 +218,6 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
 			exit(1);
 		}	
 
-                //sprintf(matrixname, "%s-l%f-r%f-iter%d.final.H", model_file_name, lambda, rho, maxiter);
                 sprintf(matrixname, "%s.iter%d.final.contexts", model_file_name, maxiter);
                 model_fph = fopen(matrixname, "w");
 		if(model_fph == NULL) {
@@ -236,8 +233,8 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
         int x_max = param.x_max;
         float  alpha = 0.75;
         printf("x_max is %d\n", x_max);
-        smat_t count_training_set, count_test_set;//FIXME
-	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);//FIXME
+        smat_t count_training_set, count_test_set;
+	pmf_read_data(count_file_name,count_training_set, count_test_set, file_fmt);
         
         for(size_t idx=0; idx < training_set.nnz; idx++){
         training_set.weight[idx] = (count_training_set.val[idx]>x_max)?1:pow(count_training_set.val[idx]/x_max, alpha);
@@ -248,39 +245,10 @@ void run_ccdr1(pmf_parameter_t &param, const char *input_file_name, const char *
         test_set.weight[idx] =  (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
         test_set.weight_t[idx] = (count_test_set.val_t[idx]>x_max)?1:pow(count_test_set.val_t[idx]/x_max, alpha);
         }
-        /*
-        for(size_t idx=0; idx < test_set.nnz; idx++){
-        printf("count_test_set, %f\n",count_test_set.val[idx]);// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
-        printf("test_set, %f\n",test_set.weight[idx]);// (count_test_set.val[idx]>x_max)?1:pow(count_test_set.val[idx]/x_max, alpha);
-        }
-        */
         }
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::COLMAJOR);
 
-        //there I need to make some modifications;
-        //adjust W and H, their size are both 302*11815
-        //adjust W[300]  H[301]
-        //printf("W matrix size is %d, %d\n", model.W.rows, model.W.cols);
-        //printf("H matrix size is %d, %d\n", model.H.rows, model.H.cols);
-        //printf("W matrix 0 rows size is %d\n",model.W[0].size());
-        //printf("W matrix 301 rows size is %d\n",model.W[301].size());
-        //printf("k is %d, k +1 is %d", param.k, param.k+1);
-        
-        //here k is 302
-        /*for (int idx = 0; idx < model.W[0].size(); idx++){
-                model.W[param.k - 2][idx] = 1;
-                //printf("%f ", model.W[300][idx]);
-                model.H[param.k - 1][idx] = 1;
-        }
-*/
-/*
-        for (int idx = 0; idx < model.W[0].size(); idx++){
-                printf("%d \n", model.W[300].at(idx));
-                printf("%d \n", model.H[301].at[idx]);
-        }
-*/
-//there needs more modifications!!!!!!!!!!!!!!!!!!!!!!!!
-
+    
 	// Random permutation for rows and cols of R for better load balancing
 
 	std::vector<unsigned> row_perm, inverse_row_perm;
@@ -404,7 +372,6 @@ void run_sgd(pmf_parameter_t &param, const char *input_file_name, const char *mo
 	}
 	
 	blocks_t training_set, test_set;
-	//pmf_read_data(input_file_name, training_set, test_set, file_fmt);
 	pmf_read_data(input_file_name, training_set, test_set);
 	// SGD requires rowmajor model
 	pmf_model_t model(training_set.rows, training_set.cols, param.k, pmf_model_t::ROWMAJOR);
@@ -453,16 +420,10 @@ int main(int argc, char* argv[]){
         char output_folder_name[1024];
 	char model_file_name[1024];
 	char model_file_name_tmp[1024];
-//char *model_file_name=NULL;
 	pmf_parameter_t param = parse_command_line(argc, argv, input_file_name, count_file_name, output_folder_name, model_file_name);
-        //printf("count file name is %s", count_file_name );//FIXME
         int result = mkdir(output_folder_name, 0777);
-        //printf("output_folder_name is %s\n", output_folder_name);
-        //printf("initial model_file_name is %s\n", model_file_name);
         sprintf(model_file_name_tmp,"%s/%s",output_folder_name, model_file_name);
-        //printf("model_file_name_tmp is %s\n", model_file_name_tmp);
         sprintf(model_file_name,"%s", model_file_name_tmp);
-        //printf("final model_file_name is %s\n", model_file_name);
         switch (param.solver_type){
 		case CCDR1:
 		case CCDR1_SPEEDUP:
