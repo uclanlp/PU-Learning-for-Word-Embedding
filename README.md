@@ -1,10 +1,10 @@
 
 ## [Learning Word Embeddings for Low-resource Languages by PU Learning](https://arxiv.org/abs/1805.03366) ##
-[Chao Jiang], [Hsiang-Fu Yu](http://www.cs.utexas.edu/~rofuyu/), [Cho-Jui Hsieh](http://www.stat.ucdavis.edu/~chohsieh/rf/), [Kai-Wei Chang](http://web.cs.ucla.edu/~kwchang/). NAACL 2018
+Chao Jiang, [Hsiang-Fu Yu](http://www.cs.utexas.edu/~rofuyu/), [Cho-Jui Hsieh](http://www.stat.ucdavis.edu/~chohsieh/rf/), [Kai-Wei Chang](http://web.cs.ucla.edu/~kwchang/). NAACL 2018
 
-**Please nevigate the code through [this jupyter notebook](https://github.com/uclanlp/reducingbias/blob/master/src/fairCRF_gender_ratio.ipynb)**
+**Please run the code through [demo.sh](https://github.com/uclanlp/MFEmbedding/blob/master/demo.sh)**
 
-**For details, please refer to [this paper](http://aclweb.org/anthology/D17-1323.pdf)**
+**For details, please refer to [this paper](https://arxiv.org/pdf/1805.03366.pdf)**
 
 
 - ### Abstract
