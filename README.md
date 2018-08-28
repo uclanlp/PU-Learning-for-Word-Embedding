@@ -41,29 +41,3 @@ We provide all the potential scores for MS-COCO dataset in data/COCO folder.  Al
   url       = {https://www.aclweb.org/anthology/D17-1319}
  }
  ```
-
-- ### Note
-  The accuracy performance on the MLC tasks is improved. The updated results are:
-
-<table>
-    <tr>
-        <th colspan="4">Performance (%)</th>
-    </tr>
-    <tr>
-        <th colspan="2">MLC: Development Set</th>
-        <th colspan="2">MLC: Test Set</th>
-    </tr>
-    <tr>
-        <td>CRF:</td>
-        <td>45.32</td>
-        <td>CRF:</td>
-        <td>45.53</td>
-    </tr>
-    <tr>
-        <td>CRF+RBA</td>
-        <td>45.24</td>
-        <td>CRF+RBA</td>
-        <td>45.43</td>
-    </tr>
-</table>
-
