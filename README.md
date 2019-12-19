@@ -19,7 +19,7 @@ To reproduce results on text8 dataset, please run demo.sh file. It could automat
 
 - ### Data
 
-We provide the testsets in four different languages: English, Czech, Danish and Dutch. Testsets in Czech, Danish and Dutch are translated into English by Google Translation API. They are in the testsets_in_different_languages folder.
+We provide the testsets in four different languages: English, Czech, Danish and Dutch. Testsets in Czech, Danish and Dutch are translated from English by Google Translation API. They are in the testsets_in_different_languages folder.
 
 - ### Reference
   Please cite
